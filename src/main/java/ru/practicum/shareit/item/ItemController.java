@@ -37,8 +37,8 @@ public class ItemController {
     }
 
     @PatchMapping("{itemId}")
-    public ItemDto updateItem(@RequestBody ItemDto itemDto, @PathVariable long itemId
-            , @RequestHeader("X-Sharer-User-Id") Long id)
+    public ItemDto updateItem(@RequestBody ItemDto itemDto, @PathVariable long itemId,
+             @RequestHeader("X-Sharer-User-Id") Long id)
             throws IllegalAccessException {
         return itemService.update(itemDto, itemId,id);
     }

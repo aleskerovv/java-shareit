@@ -45,6 +45,7 @@ public class ItemDaoImpl implements ItemDao {
                 .setOwner(userDao.getById(userId));
 
         itemRepository.put(item.getId(), item);
+        log.info("Created new item. ItemID: {}", item.getId());
 
         return ItemMapper.toItemDto(item);
     }

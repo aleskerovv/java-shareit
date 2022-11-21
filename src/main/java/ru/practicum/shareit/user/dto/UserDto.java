@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 @Accessors(chain = true)
 public class UserDto {
     private Long id;
-    @Email(message = "must be in email format")
+    @Email(message = "must be a well-formed email address")
     @NotNull(message = "email can not be null")
     private String email;
     private String name;

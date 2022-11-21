@@ -11,7 +11,6 @@ import javax.validation.constraints.NotNull;
 @Accessors(chain = true)
 public class ItemDto {
     private Long id;
-    @NotNull(message = "'name' can not be null")
     @NotBlank(message = "'name' can not be blank")
     private String name;
     @NotNull(message = "'description' can not be null")

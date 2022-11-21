@@ -83,7 +83,7 @@ public class UserDaoImpl implements UserDao {
         boolean isCorrect = Pattern.compile(regexPattern)
                 .matcher(email)
                 .matches();
-        if(!isCorrect) throw new IncorrectEmailException("email must be in email format: user@user.com");
+        if (!isCorrect) throw new IncorrectEmailException("must be a well-formed email address");
     }
 
     private void isEmailExists(String email) {
@@ -91,7 +91,7 @@ public class UserDaoImpl implements UserDao {
                 .stream()
                 .map(User::getEmail)
                 .anyMatch(s -> s.equals(email));
-        if(isExists) throw new IllegalArgumentException("email already exists");
+        if (isExists) throw new IllegalArgumentException("email already exists");
     }
 
     private String updateEmail(String email) {
