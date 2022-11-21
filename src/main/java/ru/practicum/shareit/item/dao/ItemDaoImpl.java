@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exceptions.NoAccessException;
+import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
@@ -23,7 +24,7 @@ public class ItemDaoImpl implements ItemDao {
 
     @Override
     public List<ItemDto> getAllItems(Long userId) {
-        log.info("Found items whose owner is user with id {}", userId);
+        log.info("Find items whose owner is user with id {}", userId);
         return itemRepository.values().stream()
                 .filter(i -> Objects.equals(i.getOwner().getId(), userId))
                 .map(ItemMapper::toItemDto)
@@ -32,6 +33,9 @@ public class ItemDaoImpl implements ItemDao {
 
     @Override
     public ItemDto getById(Long itemId) {
+        if (!itemRepository.containsKey(itemId))
+            throw new NotFoundException(String.format("Item with ID %d not found", itemId));
+
         return ItemMapper.toItemDto(itemRepository.get(itemId));
     }
 
@@ -64,6 +68,7 @@ public class ItemDaoImpl implements ItemDao {
         item.setIsAvailable(itemDto.getAvailable() != null ? itemDto.getAvailable() : item.getIsAvailable());
 
         itemRepository.put(item.getId(), item);
+        log.info("Updated item with ID {}", item.getId());
 
         return ItemMapper.toItemDto(item);
     }
@@ -72,6 +77,7 @@ public class ItemDaoImpl implements ItemDao {
     public List<ItemDto> findByParams(String params) {
         if (params.isEmpty() || params.isBlank()) return new ArrayList<>();
 
+        log.info("Find items which contains substring-param: {}", params);
         return itemRepository.values().stream()
                 .map(ItemMapper::toItemDto)
                 .filter(v -> v.getName().toLowerCase().contains(params.toLowerCase()) ||

@@ -23,12 +23,10 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public UserDto getById(Long id) {
-        return userStorage.values()
-                .stream()
-                .filter(user -> user.getId().equals(id))
-                .findAny()
-                .map(UserMapper::toUserDto)
-                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND, id)));
+        if (!userStorage.containsKey(id))
+            throw new NotFoundException(String.format(USER_NOT_FOUND, id));
+
+        return UserMapper.toUserDto(userStorage.get(id));
     }
 
     @Override

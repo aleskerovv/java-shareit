@@ -10,7 +10,6 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import java.util.List;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
     private final ItemDao itemDao;
