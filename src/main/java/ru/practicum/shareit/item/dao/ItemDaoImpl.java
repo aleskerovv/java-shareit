@@ -5,11 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exceptions.NoAccessException;
 import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.item.ItemMapper;
-import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserDao;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,66 +21,62 @@ public class ItemDaoImpl implements ItemDao {
     private final UserDao userDao;
 
     @Override
-    public List<ItemDto> getAllItems(Long userId) {
+    public List<Item> getAllItems(Long userId) {
         log.info("Find items whose owner is user with id {}", userId);
         return itemRepository.values().stream()
                 .filter(i -> Objects.equals(i.getOwner().getId(), userId))
-                .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public ItemDto getById(Long itemId) {
+    public Item getById(Long itemId) {
         if (!itemRepository.containsKey(itemId))
             throw new NotFoundException(String.format("Item with ID %d not found", itemId));
 
-        return ItemMapper.toItemDto(itemRepository.get(itemId));
+        return itemRepository.get(itemId);
     }
 
     @Override
-    public ItemDto create(ItemDto itemDto, Long userId) {
-        Item item = new Item();
-        item.setName(itemDto.getName())
-                .setDescription(itemDto.getDescription())
-                .setIsAvailable(itemDto.getAvailable())
-                .setId(incrementId())
-                .setOwner(userDao.getById(userId));
+    public Item create(Item item, Long userId) {
+        item.setOwner(userDao.getById(userId))
+                        .setId(this.incrementId());
 
         itemRepository.put(item.getId(), item);
         log.info("Created new item. ItemID: {}", item.getId());
 
-        return ItemMapper.toItemDto(item);
+        return item;
     }
 
     @Override
-    public ItemDto update(ItemDto itemDto, Long itemId,Long userId) {
-        UserDto user = userDao.getById(userId);
-        Item item = itemRepository.get(itemId);
+    public Item update(Item item, Long userId) {
+        User user = this.userDao.getById(userId);
+        Item itemToUpdate = this.itemRepository.get(item.getId());
 
-        if (!item.getOwner().equals(user)) {
+        if (!itemToUpdate.getOwner().equals(user)) {
             throw new NoAccessException("You have no access to edit this item");
         }
 
-        item.setName(itemDto.getName() != null ? itemDto.getName() : item.getName());
-        item.setDescription(itemDto.getDescription() != null ? itemDto.getDescription() : item.getDescription());
-        item.setIsAvailable(itemDto.getAvailable() != null ? itemDto.getAvailable() : item.getIsAvailable());
+        itemToUpdate.setName(item.getName() != null ? item.getName() : itemToUpdate.getName());
+        itemToUpdate.setDescription(item.getDescription() != null ? item.getDescription()
+                : itemToUpdate.getDescription());
+        itemToUpdate.setIsAvailable(item.getIsAvailable() != null ? item.getIsAvailable()
+                : itemToUpdate.getIsAvailable());
 
-        itemRepository.put(item.getId(), item);
-        log.info("Updated item with ID {}", item.getId());
+        itemRepository.put(itemToUpdate.getId(), itemToUpdate);
+        log.info("Updated item with ID {}", itemToUpdate.getId());
 
-        return ItemMapper.toItemDto(item);
+        return itemToUpdate;
     }
 
     @Override
-    public List<ItemDto> findByParams(String params) {
+    public List<Item> findByParams(String params) {
         if (params.isEmpty() || params.isBlank()) return new ArrayList<>();
 
         log.info("Find items which contains substring-param: {}", params);
         return itemRepository.values().stream()
-                .map(ItemMapper::toItemDto)
                 .filter(v -> v.getName().toLowerCase().contains(params.toLowerCase()) ||
                         v.getDescription().toLowerCase().contains(params.toLowerCase()))
-                .filter(ItemDto::getAvailable)
+                .filter(Item::getIsAvailable)
                 .collect(Collectors.toList());
     }
 

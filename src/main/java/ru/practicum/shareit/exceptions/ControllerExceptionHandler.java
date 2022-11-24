@@ -8,34 +8,28 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @RestControllerAdvice
 @Slf4j
 public class ControllerExceptionHandler {
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ErrorMessage handleException(MethodArgumentNotValidException ex) {
         String error = Objects.requireNonNull(ex.getFieldError()).getDefaultMessage();
         log.warn(error);
 
-        return new ErrorMessage(LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                error);
+        return new ErrorMessage(HttpStatus.BAD_REQUEST, error);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    public ErrorMessage handleRequestHeaderException(MissingRequestHeaderException ex) {
+    @ExceptionHandler({MissingRequestHeaderException.class, IncorrectEmailException.class})
+    public ErrorMessage handleException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);
 
-        return new ErrorMessage(LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                error);
+        return new ErrorMessage(HttpStatus.BAD_REQUEST, error);
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
@@ -44,34 +38,16 @@ public class ControllerExceptionHandler {
         String error = ex.getMessage();
         log.warn(error);
 
-        return new ErrorMessage(LocalDateTime.now(),
-                HttpStatus.FORBIDDEN.value(),
-                HttpStatus.FORBIDDEN.getReasonPhrase(),
-                error);
+        return new ErrorMessage(HttpStatus.FORBIDDEN, error);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler(NotFoundException.class)
-    public ErrorMessage handleNotFoundException(NotFoundException ex) {
+    @ExceptionHandler({NotFoundException.class, UnsupportedOperationException.class})
+    public ErrorMessage handleNotFoundException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);
 
-        return new ErrorMessage(LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.getReasonPhrase(),
-                error);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(IncorrectEmailException.class)
-    public ErrorMessage handleIncorrectEmailException(IncorrectEmailException ex) {
-        String error = ex.getMessage();
-        log.warn(error);
-
-        return new ErrorMessage(LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.getReasonPhrase(),
-                error);
+        return new ErrorMessage(HttpStatus.NOT_FOUND, error);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -80,23 +56,7 @@ public class ControllerExceptionHandler {
         String error = ex.getMessage();
         log.warn(error);
 
-        return new ErrorMessage(LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.getReasonPhrase(),
-                error);
-    }
-
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler(UnsupportedOperationException.class)
-    protected ErrorMessage handleUnsupportedOperationException(
-            UnsupportedOperationException ex) {
-        String error = ex.getMessage();
-        log.error(error);
-
-        return new ErrorMessage(LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.getReasonPhrase(),
-                error);
+        return new ErrorMessage(HttpStatus.INTERNAL_SERVER_ERROR, error);
     }
 
     @ExceptionHandler

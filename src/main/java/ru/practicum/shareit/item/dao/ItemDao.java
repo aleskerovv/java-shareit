@@ -1,18 +1,18 @@
 package ru.practicum.shareit.item.dao;
 
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 
 public interface ItemDao {
 
-    List<ItemDto> getAllItems(Long userId);
+    List<Item> getAllItems(Long userId);
 
-    ItemDto getById(Long itemId);
+    Item getById(Long itemId);
 
-    ItemDto create(ItemDto itemDto, Long userId);
+    Item create(Item item, Long userId);
 
-    ItemDto update(ItemDto itemDto, Long itemId,Long userId) throws IllegalAccessException;
+    Item update(Item item, Long userId);
 
-    List<ItemDto> findByParams(String params);
+    List<Item> findByParams(String params);
 }

@@ -1,11 +1,13 @@
 package ru.practicum.shareit.item;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.validation.Create;
+import ru.practicum.shareit.validation.Update;
 
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -32,15 +34,16 @@ public class ItemController {
     }
 
     @PostMapping
-    public ItemDto createItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long id) {
+    public ItemDto createItem(@Validated(Create.class)
+                              @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long id) {
         return itemService.create(itemDto, id);
     }
 
     @PatchMapping("{itemId}")
-    public ItemDto updateItem(@RequestBody ItemDto itemDto, @PathVariable long itemId,
-             @RequestHeader("X-Sharer-User-Id") Long id)
-            throws IllegalAccessException {
-        return itemService.update(itemDto, itemId,id);
+    public ItemDto updateItem(@Validated(Update.class)
+                              @RequestBody ItemDto itemDto, @PathVariable long itemId,
+                              @RequestHeader("X-Sharer-User-Id") Long id) {
+        return itemService.update(itemDto, itemId, id);
     }
 
     @GetMapping("/search")

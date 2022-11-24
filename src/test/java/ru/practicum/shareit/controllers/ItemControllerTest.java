@@ -16,7 +16,7 @@ import ru.practicum.shareit.exceptions.NoAccessException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dao.UserDao;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -39,19 +39,19 @@ class ItemControllerTest {
 
     @BeforeAll
     void create() throws Exception {
-        UserDto userDto = new UserDto();
-        userDto.setId(1L)
+        User user = new User();
+        user.setId(1L)
                 .setName("test user")
                 .setEmail("test@user.com");
-        userDao.create(userDto);
+        userDao.create(user);
 
-        UserDto user2 = new UserDto();
+        User user2 = new User();
         user2.setId(2L)
                 .setName("test 2user")
                 .setEmail("test2@user.com");
         userDao.create(user2);
 
-        UserDto user3 = new UserDto();
+        User user3 = new User();
         user3.setId(3L)
                 .setName("test 3user")
                 .setEmail("test3@user.com");

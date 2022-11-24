@@ -10,7 +10,7 @@ public interface AbstractDao<T> {
 
     T create(T t);
 
-    T update(T t, Long id);
+    T update(T t);
 
     void deleteById(Long id);
 }

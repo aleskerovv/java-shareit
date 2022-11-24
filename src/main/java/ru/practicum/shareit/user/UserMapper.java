@@ -13,4 +13,22 @@ public class UserMapper {
 
         return userDto;
     }
+
+    public static User toUserEntity(UserDto userDto) {
+        User user = new User();
+
+        user.setEmail(userDto.getEmail())
+                .setName(userDto.getName());
+
+        return user;
+    }
+
+    public static User toUserEntity(UserDto userDto, Long id) {
+        User user = new User();
+        user.setName(userDto.getName())
+                .setEmail(userDto.getEmail())
+                .setId(id);
+
+        return user;
+    }
 }

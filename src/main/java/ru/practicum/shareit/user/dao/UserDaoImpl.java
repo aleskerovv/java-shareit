@@ -2,17 +2,13 @@ package ru.practicum.shareit.user.dao;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exceptions.IncorrectEmailException;
 import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.user.UserMapper;
-import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
@@ -22,52 +18,40 @@ public class UserDaoImpl implements UserDao {
     private static final String USER_NOT_FOUND = "User with id %d not found";
 
     @Override
-    public UserDto getById(Long id) {
+    public User getById(Long id) {
         if (!userStorage.containsKey(id))
             throw new NotFoundException(String.format(USER_NOT_FOUND, id));
 
-        return UserMapper.toUserDto(userStorage.get(id));
+        return userStorage.get(id);
     }
 
     @Override
-    public List<UserDto> getAll() {
-        return userStorage.values()
-                .stream()
-                .map(UserMapper::toUserDto)
-                .collect(Collectors.toList());
+    public List<User> getAll() {
+        return new ArrayList<>(userStorage.values());
     }
 
     @Override
-    public UserDto create(UserDto userDto) {
-        User user = new User();
+    public User create(User user) {
+        this.isEmailExists(user.getEmail());
 
-        isEmailExists(userDto.getEmail());
-
-        user.setId(this.incrementId())
-                .setEmail(userDto.getEmail())
-                .setName(userDto.getName());
+        user.setId(this.incrementId());
         userStorage.put(user.getId(), user);
 
         log.info("Created new user. UserId: {}", user.getId());
-        return UserMapper.toUserDto(user);
+        return user;
     }
 
     @Override
-    public UserDto update(UserDto userDto, Long id) {
-        if (!userStorage.containsKey(id)) {
-            throw new NotFoundException(String.format(USER_NOT_FOUND, id));
-        }
+    public User update(User user) {
+        User userToUpdate = this.userStorage.get(user.getId());
 
-        User user = userStorage.get(id);
+        userToUpdate.setName(user.getName() != null ? user.getName() : userToUpdate.getName());
+        userToUpdate.setEmail(user.getEmail() != null ? this.isEmailExists(user.getEmail()) : userToUpdate.getEmail());
 
-        user.setName(userDto.getName() != null ? userDto.getName() : user.getName());
-
-        user.setEmail(userDto.getEmail() != null ? this.updateEmail(userDto.getEmail()) : user.getEmail());
-
-        userStorage.put(user.getId(), user);
+        userStorage.put(userToUpdate.getId(), userToUpdate);
 
         log.info("Updated user with ID {}", user.getId());
-        return UserMapper.toUserDto(user);
+        return userToUpdate;
     }
 
     @Override
@@ -76,28 +60,17 @@ public class UserDaoImpl implements UserDao {
         userStorage.remove(id);
     }
 
-    private void isEmailCorrect(String email) {
-        String regexPattern = "^(.+)@(\\S+)$";
-        boolean isCorrect = Pattern.compile(regexPattern)
-                .matcher(email)
-                .matches();
-        if (!isCorrect) throw new IncorrectEmailException("must be a well-formed email address");
-    }
 
-    private void isEmailExists(String email) {
+    private String isEmailExists(String email) {
         boolean isExists = userStorage.values()
                 .stream()
                 .map(User::getEmail)
                 .anyMatch(s -> s.equals(email));
         if (isExists) throw new IllegalArgumentException("email already exists");
-    }
-
-    private String updateEmail(String email) {
-        isEmailCorrect(email);
-        isEmailExists(email);
 
         return email;
     }
+
 
     private long incrementId() {
         return id++;

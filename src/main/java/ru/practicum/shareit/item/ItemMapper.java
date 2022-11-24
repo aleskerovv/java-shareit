@@ -8,11 +8,31 @@ public class ItemMapper {
         ItemDto itemDto = new ItemDto();
         itemDto.setName(item.getName())
                 .setDescription(item.getDescription())
-                .setOwner(item.getOwner())
                 .setAvailable(item.getIsAvailable())
-                .setRequestId(item.getRequest() != null ? item.getRequest().getId() : null)
+                .setRequestId(item.getRequestId() != null ? item.getRequestId() : null)
                 .setId(item.getId());
 
         return itemDto;
+    }
+
+    public static Item toItemEntity(ItemDto itemDto) {
+        Item item = new Item();
+        item.setIsAvailable(itemDto.getAvailable())
+                .setDescription(itemDto.getDescription())
+                .setName(itemDto.getName());
+
+        return item;
+    }
+
+    public static Item toItemEntity(ItemDto itemDto, Long id) {
+        Item item = new Item();
+
+        item.setName(itemDto.getName())
+                .setDescription(itemDto.getDescription())
+                .setIsAvailable(itemDto.getAvailable())
+                .setId(id)
+                .setRequestId(itemDto.getRequestId());
+
+        return item;
     }
 }
