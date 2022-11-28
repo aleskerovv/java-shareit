@@ -16,7 +16,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import ru.practicum.shareit.exceptions.NoAccessException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.user.dao.UserDao;
+import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -37,7 +37,7 @@ class ItemControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserDao userDao;
+    private UserRepository userRepository;
 
     @BeforeAll
     void create() throws Exception {
@@ -45,19 +45,19 @@ class ItemControllerTest {
         user.setId(1L)
                 .setName("test user")
                 .setEmail("test@user.com");
-        userDao.create(user);
+        userRepository.create(user);
 
         User user2 = new User();
         user2.setId(2L)
                 .setName("test 2user")
                 .setEmail("test2@user.com");
-        userDao.create(user2);
+        userRepository.create(user2);
 
         User user3 = new User();
         user3.setId(3L)
                 .setName("test 3user")
                 .setEmail("test3@user.com");
-        userDao.create(user3);
+        userRepository.create(user3);
 
         ItemDto item = new ItemDto();
         item.setName("Дрель")

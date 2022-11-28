@@ -1,10 +1,10 @@
-package ru.practicum.shareit.item.dao;
+package ru.practicum.shareit.item.repository;
 
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 
-public interface ItemDao {
+public interface ItemRepository {
 
     List<Item> getAllItems(Long userId);
 
@@ -12,7 +12,7 @@ public interface ItemDao {
 
     Item create(Item item, Long userId);
 
-    Item update(Item item, Long userId);
+    Item update(Item item, Long itemId);
 
     List<Item> findByParams(String params);
 }

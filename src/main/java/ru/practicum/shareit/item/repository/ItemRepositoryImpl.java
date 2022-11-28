@@ -1,13 +1,11 @@
-package ru.practicum.shareit.item.dao;
+package ru.practicum.shareit.item.repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exceptions.NoAccessException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.dao.UserDao;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,10 +13,10 @@ import java.util.stream.Collectors;
 @Repository
 @Slf4j
 @RequiredArgsConstructor
-public class ItemDaoImpl implements ItemDao {
+public class ItemRepositoryImpl implements ItemRepository {
 
     private final Map<Long, Item> itemRepository = new HashMap<>();
-    private final UserDao userDao;
+    private final UserRepository userRepository;
 
     @Override
     public List<Item> getAllItems(Long userId) {
@@ -38,7 +36,7 @@ public class ItemDaoImpl implements ItemDao {
 
     @Override
     public Item create(Item item, Long userId) {
-        item.setOwner(userDao.getById(userId))
+        item.setOwner(userRepository.getById(userId))
                         .setId(this.incrementId());
 
         itemRepository.put(item.getId(), item);
@@ -48,19 +46,14 @@ public class ItemDaoImpl implements ItemDao {
     }
 
     @Override
-    public Item update(Item item, Long userId) {
-        User user = this.userDao.getById(userId);
-        Item itemToUpdate = this.itemRepository.get(item.getId());
-
-        if (!itemToUpdate.getOwner().equals(user)) {
-            throw new NoAccessException("You have no access to edit this item");
-        }
+    public Item update(Item item, Long itemId) {
+        Item itemToUpdate = this.itemRepository.get(itemId);
 
         itemToUpdate.setName(item.getName() != null ? item.getName() : itemToUpdate.getName());
         itemToUpdate.setDescription(item.getDescription() != null ? item.getDescription()
                 : itemToUpdate.getDescription());
-        itemToUpdate.setIsAvailable(item.getIsAvailable() != null ? item.getIsAvailable()
-                : itemToUpdate.getIsAvailable());
+        itemToUpdate.setAvailable(item.getAvailable() != null ? item.getAvailable()
+                : itemToUpdate.getAvailable());
 
         itemRepository.put(itemToUpdate.getId(), itemToUpdate);
         log.info("Updated item with ID {}", itemToUpdate.getId());
@@ -76,7 +69,7 @@ public class ItemDaoImpl implements ItemDao {
         return itemRepository.values().stream()
                 .filter(v -> v.getName().toLowerCase().contains(params.toLowerCase()) ||
                         v.getDescription().toLowerCase().contains(params.toLowerCase()))
-                .filter(Item::getIsAvailable)
+                .filter(Item::getAvailable)
                 .collect(Collectors.toList());
     }
 

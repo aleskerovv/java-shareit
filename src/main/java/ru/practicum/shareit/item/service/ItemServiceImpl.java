@@ -2,47 +2,59 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.item.ItemMapper;
-import ru.practicum.shareit.item.dao.ItemDao;
+import ru.practicum.shareit.exceptions.NoAccessException;
+import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
-    private final ItemDao itemDao;
+    private final ItemRepository itemRepository;
+    private final ItemMapper itemMapperTest;
 
     @Override
     public List<ItemDto> getAllItems(Long userId) {
-        return itemDao.getAllItems(userId).stream()
-                .map(ItemMapper::toItemDto)
+        return itemRepository.getAllItems(userId).stream()
+                .map(itemMapperTest::toItemDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public ItemDto getById(Long itemId) {
-        return ItemMapper.toItemDto(itemDao.getById(itemId));
+        return itemMapperTest.toItemDto(itemRepository.getById(itemId));
     }
 
     @Override
     public ItemDto create(ItemDto itemDto, Long userId) {
-        Item item = ItemMapper.toItemEntity(itemDto);
-        return ItemMapper.toItemDto(itemDao.create(item, userId));
+        Item item = itemMapperTest.toItemEntity(itemDto, userId);
+        return itemMapperTest.toItemDto(itemRepository.create(item, userId));
     }
 
     @Override
     public ItemDto update(ItemDto itemDto, Long itemId, Long userId) {
-        Item item = ItemMapper.toItemEntity(itemDto, itemId);
-        return ItemMapper.toItemDto(itemDao.update(item, userId));
+        this.checkItemsOwner(itemId, userId);
+
+        Item item = itemMapperTest.toItemEntity(itemDto, userId);
+
+        return itemMapperTest.toItemDto(itemRepository.update(item, itemId));
     }
 
     @Override
     public List<ItemDto> findByParams(String params) {
-        return itemDao.findByParams(params).stream()
-                .map(ItemMapper::toItemDto)
+        return itemRepository.findByParams(params).stream()
+                .map(itemMapperTest::toItemDto)
                 .collect(Collectors.toList());
+    }
+
+    private void checkItemsOwner(Long itemId, Long userId) {
+        if (!Objects.equals(itemRepository.getById(itemId).getOwner().getId(), userId)) {
+            throw new NoAccessException("You have no access to edit this item");
+        }
     }
 }

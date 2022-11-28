@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.dto;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.validation.Create;
 
 import javax.validation.constraints.NotBlank;
@@ -17,5 +18,6 @@ public class ItemDto {
     private String description;
     @NotNull(groups = Create.class, message = "'available' can not be null")
     private Boolean available;
+    private UserDto owner;
     private Long requestId;
 }

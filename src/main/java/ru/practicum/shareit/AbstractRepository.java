@@ -2,7 +2,7 @@ package ru.practicum.shareit;
 
 import java.util.List;
 
-public interface AbstractDao<T> {
+public interface AbstractRepository<T> {
 
     T getById(Long id);
 
@@ -10,7 +10,7 @@ public interface AbstractDao<T> {
 
     T create(T t);
 
-    T update(T t);
+    T update(T t, Long id);
 
     void deleteById(Long id);
 }

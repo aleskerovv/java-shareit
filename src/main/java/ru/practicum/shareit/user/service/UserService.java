@@ -6,13 +6,13 @@ import java.util.List;
 
 public interface UserService {
 
-    UserDto getUserById(Long id);
+    UserDto getUserById(Long userId);
 
     List<UserDto> getUsers();
 
     UserDto createUser(UserDto userDto);
 
-    UserDto updateUser(UserDto userDto, Long id);
+    UserDto updateUser(UserDto userDto, Long userId);
 
-    void deleteById(Long id);
+    void deleteById(Long userId);
 }

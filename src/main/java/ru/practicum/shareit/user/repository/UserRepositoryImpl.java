@@ -1,4 +1,4 @@
-package ru.practicum.shareit.user.dao;
+package ru.practicum.shareit.user.repository;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -12,17 +12,17 @@ import java.util.Map;
 
 @Repository
 @Slf4j
-public class UserDaoImpl implements UserDao {
+public class UserRepositoryImpl implements UserRepository {
     private final Map<Long, User> userStorage = new HashMap<>();
     private Long id = 1L;
     private static final String USER_NOT_FOUND = "User with id %d not found";
 
     @Override
-    public User getById(Long id) {
-        if (!userStorage.containsKey(id))
-            throw new NotFoundException(String.format(USER_NOT_FOUND, id));
+    public User getById(Long userId) {
+        if (!userStorage.containsKey(userId))
+            throw new NotFoundException(String.format(USER_NOT_FOUND, userId));
 
-        return userStorage.get(id);
+        return userStorage.get(userId);
     }
 
     @Override
@@ -42,8 +42,8 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User update(User user) {
-        User userToUpdate = this.userStorage.get(user.getId());
+    public User update(User user, Long userId) {
+        User userToUpdate = this.userStorage.get(userId);
 
         userToUpdate.setName(user.getName() != null ? user.getName() : userToUpdate.getName());
         userToUpdate.setEmail(user.getEmail() != null ? this.isEmailExists(user.getEmail()) : userToUpdate.getEmail());
@@ -55,9 +55,9 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public void deleteById(Long id) {
-        log.info("Deleted user with ID {}", id);
-        userStorage.remove(id);
+    public void deleteById(Long userId) {
+        log.info("Deleted user with ID {}", userId);
+        userStorage.remove(userId);
     }
 
 
