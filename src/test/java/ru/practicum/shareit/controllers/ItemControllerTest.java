@@ -45,19 +45,19 @@ class ItemControllerTest {
         user.setId(1L)
                 .setName("test user")
                 .setEmail("test@user.com");
-        userRepository.create(user);
+        userRepository.save(user);
 
         User user2 = new User();
         user2.setId(2L)
                 .setName("test 2user")
                 .setEmail("test2@user.com");
-        userRepository.create(user2);
+        userRepository.save(user2);
 
         User user3 = new User();
         user3.setId(3L)
                 .setName("test 3user")
                 .setEmail("test3@user.com");
-        userRepository.create(user3);
+        userRepository.save(user3);
 
         ItemDto item = new ItemDto();
         item.setName("Дрель")

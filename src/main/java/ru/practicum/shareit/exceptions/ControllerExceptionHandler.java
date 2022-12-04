@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Objects;
 
 @RestControllerAdvice
@@ -24,7 +25,9 @@ public class ControllerExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({MissingRequestHeaderException.class, IncorrectEmailException.class})
+    @ExceptionHandler({MissingRequestHeaderException.class, IncorrectEmailException.class,
+            ItemIsUnavailableException.class,
+            UnknownStateException.class})
     public ErrorMessage handleException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);
@@ -42,7 +45,7 @@ public class ControllerExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler({NotFoundException.class, UnsupportedOperationException.class})
+    @ExceptionHandler({EntityNotFoundException.class, UnsupportedOperationException.class})
     public ErrorMessage handleNotFoundException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);
@@ -50,13 +53,13 @@ public class ControllerExceptionHandler {
         return new ErrorMessage(HttpStatus.NOT_FOUND, error);
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(IllegalArgumentException.class)
     public ErrorMessage handleIllegalArgumentException(IllegalArgumentException ex) {
         String error = ex.getMessage();
         log.warn(error);
 
-        return new ErrorMessage(HttpStatus.INTERNAL_SERVER_ERROR, error);
+        return new ErrorMessage(HttpStatus.CONFLICT, error);
     }
 
     @ExceptionHandler
