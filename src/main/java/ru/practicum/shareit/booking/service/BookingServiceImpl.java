@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookStatus;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.dto.BookingDtoCreate;
@@ -48,7 +50,7 @@ public class BookingServiceImpl implements BookingService {
 
         this.checkIsTheSameUser(bookingDtoCreate.getItemId(), userId);
 
-        if (!itemService.getById(bookingDtoCreate.getItemId()).getAvailable()) {
+        if (!itemService.getById(bookingDtoCreate.getItemId(), userId).getAvailable()) {
             throw new ItemIsUnavailableException(String.format("Item with id %d is unavailable to book",
                     bookingDtoCreate.getItemId()));
         }
@@ -61,8 +63,17 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public BookingDtoResponse addApprove(String approve, Long userId, Long bookingId) {
         Booking booking = bookingRepository.getReferenceById(bookingId);
+
+
+        //TODO: настроить выдачу названия енама
+        if ((approve.equals("true") && booking.getStatus().equals(BookStatus.APPROVED))
+        || (approve.equals("false") && booking.getStatus().equals(BookStatus.REJECTED))) {
+            throw new UnknownStateException(String.format("%s", BookStatus.fromLabel(approve)));
+        }
+
         Long itemId = booking.getItem().getId();
 
         this.checkIsOwner(itemId, userId);
@@ -82,13 +93,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public List<BookingDtoResponse> getBookingsByState(Long bookerId, String state) {
-        bookingRepository.getReferenceById(bookerId);
+        userService.getUserById(bookerId);
 
         List<Booking> bookings = new ArrayList<>();
 
         if (!STATE_PARAMS.contains(state)) {
-            throw new UnknownStateException(String.format("Unknown state: '%s'", state));
+            throw new UnknownStateException(String.format("Unknown state: %s", state));
         }
 
         switch (valueOfLabel(state)) {
@@ -124,13 +136,16 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public List<BookingDtoResponse> getBookingsByStateForOwner(Long userId, String state) {
+        userService.getUserById(userId);
+
         LocalDateTime endTime = LocalDateTime.now();
         LocalDateTime startTime = LocalDateTime.now();
         List<Booking> bookings = new ArrayList<>();
 
         if (!STATE_PARAMS.contains(state)) {
-            throw new UnknownStateException(String.format("Unknown state: '%s'", state));
+            throw new UnknownStateException(String.format("Unknown state: %s", state));
         }
 
         switch (valueOfLabel(state)) {
@@ -159,14 +174,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoResponse> findBookingsByItemId(Long itemId, LocalDateTime start) {
-        return bookingRepository.findBookingsByItemId(itemId, start).stream()
-                .limit(2)
-                .map(mapper::toBookingDtoResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public BookingDtoResponse getBookingById(Long bookingId, Long userId) {
         Booking booking = bookingRepository.getReferenceById(bookingId);
         this.check(bookingId, booking.getItem().getId(), userId);
@@ -175,20 +182,20 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void checkIsTheSameUser(Long itemId, Long userId) {
-        if (Objects.equals(itemService.getById(itemId).getOwner().getId(), userId)) {
+        if (Objects.equals(itemService.getById(itemId, userId).getOwner().getId(), userId)) {
             throw new NoAccessException("You can not book your own item");
         }
     }
 
     private void checkIsOwner(Long itemId, Long ownerId) {
-        if (!Objects.equals(itemService.getById(itemId).getOwner().getId(), ownerId)) {
+        if (!Objects.equals(itemService.getById(itemId, ownerId).getOwner().getId(), ownerId)) {
             throw new NoAccessException("You have no access to edit this booking");
         }
     }
 
     private void check(Long bookingId, Long itemId, Long userId) {
         if (!Objects.equals(bookingRepository.getReferenceById(bookingId).getBooker().getId(), userId)
-                && !Objects.equals(itemService.getById(itemId).getOwner().getId(), userId)) {
+                && !Objects.equals(itemService.getById(itemId, userId).getOwner().getId(), userId)) {
             throw new NoAccessException("You have no access to this booking");
         }
     }

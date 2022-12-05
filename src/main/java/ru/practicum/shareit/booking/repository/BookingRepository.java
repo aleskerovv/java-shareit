@@ -21,10 +21,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findCurrentBookings(Long bookerId, LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT bo from Booking bo where bo.status = 'REJECTED' \n" +
+            "and bo.booker.id = :bookerId \n" +
             " order by bo.startDate desc")
     List<Booking> findBookingByBookerIdAndStatusRejected(Long bookerId);
 
     @Query("SELECT bo from Booking bo where bo.status = 'WAITING' \n" +
+            "and bo.booker.id = :bookerId \n" +
             " order by bo.startDate desc")
     List<Booking> findBookingByBookerIdAndStatusWaiting(Long bookerId);
 
@@ -63,6 +65,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findBookingsByItemOwnerWithRejectedStatus(Long ownerId);
 
     @Query("select bo from Booking bo \n" +
-            "where bo.item.id = :itemId and bo.endDate >= :start")
+            "where bo.item.id = :itemId \n " +
+            "and (bo.endDate <= :start or \n" +
+            "bo.startDate >= :start)")
     List<Booking> findBookingsByItemId(Long itemId, LocalDateTime start);
 }

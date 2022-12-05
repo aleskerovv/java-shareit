@@ -2,7 +2,7 @@ package ru.practicum.shareit.item.dto;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import ru.practicum.shareit.booking.dto.BookingDtoResponse;
+import ru.practicum.shareit.booking.dto.BookingDtoInform;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.validation.Create;
 
@@ -20,6 +20,6 @@ public class ItemDtoResponse {
     @NotNull(groups = Create.class, message = "'available' can not be null")
     private Boolean available;
     private UserDto owner;
-    private BookingDtoResponse lastBooking;
-    private BookingDtoResponse nextBooking;
+    private BookingDtoInform lastBooking;
+    private BookingDtoInform nextBooking;
 }

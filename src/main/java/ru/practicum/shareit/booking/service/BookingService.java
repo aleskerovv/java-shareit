@@ -17,6 +17,4 @@ public interface BookingService {
     List<BookingDtoResponse> getBookingsByState(Long bookerId, String state);
 
     List<BookingDtoResponse> getBookingsByStateForOwner(Long bookerId, String state);
-
-    List<BookingDtoResponse> findBookingsByItemId(Long itemId, LocalDateTime start);
 }

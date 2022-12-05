@@ -2,8 +2,8 @@ package ru.practicum.shareit.booking;
 
 public enum BookStatus {
     WAITING("WAITING"),
-    APPROVED("APPROVED"),
-    REJECTED("REJECTED"),
+    APPROVED("true"),
+    REJECTED("false"),
     CANCELED("CANCELED");
 
     private final String label;
