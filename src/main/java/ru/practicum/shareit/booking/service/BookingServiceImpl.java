@@ -12,9 +12,9 @@ import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exceptions.IncorrectStateException;
 import ru.practicum.shareit.exceptions.ItemIsUnavailableException;
 import ru.practicum.shareit.exceptions.NoAccessException;
-import ru.practicum.shareit.exceptions.UnknownStateException;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
@@ -41,11 +41,11 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDtoResponse addBooking(BookingDtoCreate bookingDtoCreate, Long userId) {
         if (bookingDtoCreate.getEnd().isBefore(bookingDtoCreate.getStart())) {
-            throw new UnknownStateException("asdasd");
+            throw new IncorrectStateException("end_date can not be in present or greater then start_date");
         }
 
         if (bookingDtoCreate.getStart().isBefore(LocalDateTime.now())) {
-            throw new UnknownStateException("asdasd 2");
+            throw new IncorrectStateException("start_date can not be in present");
         }
 
         this.checkIsTheSameUser(bookingDtoCreate.getItemId(), userId);
@@ -67,11 +67,10 @@ public class BookingServiceImpl implements BookingService {
     public BookingDtoResponse addApprove(String approve, Long userId, Long bookingId) {
         Booking booking = bookingRepository.getReferenceById(bookingId);
 
-
-        //TODO: настроить выдачу названия енама
         if ((approve.equals("true") && booking.getStatus().equals(BookStatus.APPROVED))
-        || (approve.equals("false") && booking.getStatus().equals(BookStatus.REJECTED))) {
-            throw new UnknownStateException(String.format("%s", BookStatus.fromLabel(approve)));
+                || (approve.equals("false") && booking.getStatus().equals(BookStatus.REJECTED))) {
+            throw new IncorrectStateException(String.format("Booking is already %s",
+                    Objects.requireNonNull(BookStatus.fromLabel(approve)).name()));
         }
 
         Long itemId = booking.getItem().getId();
@@ -100,7 +99,7 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> bookings = new ArrayList<>();
 
         if (!STATE_PARAMS.contains(state)) {
-            throw new UnknownStateException(String.format("Unknown state: %s", state));
+            throw new IncorrectStateException(String.format("Unknown state: %s", state));
         }
 
         switch (valueOfLabel(state)) {
@@ -110,15 +109,15 @@ public class BookingServiceImpl implements BookingService {
                         .collect(Collectors.toList());
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookings(bookerId, LocalDateTime.now(), LocalDateTime.now());
+                bookings = bookingRepository.findCurrentBookings(bookerId, LocalDateTime.now());
                 break;
             case PAST:
                 bookings = bookingRepository.findBookingByBookerIdAndEndDateIsBefore(bookerId, LocalDateTime.now()
-                                , Sort.by(Sort.Order.desc("startDate")));
+                        , Sort.by(Sort.Order.desc("startDate")));
                 break;
             case FUTURE:
                 bookings = bookingRepository.findBookingByBookerIdAndEndDateIsAfter(bookerId, LocalDateTime.now()
-                                , Sort.by(Sort.Order.desc("startDate")));
+                        , Sort.by(Sort.Order.desc("startDate")));
                 break;
             case REJECTED:
                 bookings = bookingRepository.findBookingByBookerIdAndStatusRejected(bookerId);
@@ -145,7 +144,7 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> bookings = new ArrayList<>();
 
         if (!STATE_PARAMS.contains(state)) {
-            throw new UnknownStateException(String.format("Unknown state: %s", state));
+            throw new IncorrectStateException(String.format("Unknown state: %s", state));
         }
 
         switch (valueOfLabel(state)) {

@@ -3,12 +3,15 @@ package ru.practicum.shareit.item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CommentDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoResponse;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.validation.Create;
 import ru.practicum.shareit.validation.Update;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -47,5 +50,12 @@ public class ItemController {
     @GetMapping("/search")
     public List<ItemDtoResponse> getItemsByParams(@RequestParam(value = "text") String text) {
         return itemService.findByParams(text);
+    }
+
+    @PostMapping("{itemId}/comment")
+    public CommentDtoResponse addComment(@Valid @RequestBody CommentDto commentDto,
+                                         @RequestHeader("X-Sharer-User-Id") Long id,
+                                         @PathVariable Long itemId) {
+        return itemService.addComment(commentDto, id, itemId);
     }
 }

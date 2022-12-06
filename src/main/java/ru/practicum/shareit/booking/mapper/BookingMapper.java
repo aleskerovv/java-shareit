@@ -6,6 +6,7 @@ import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import ru.practicum.shareit.booking.dto.BookingDtoInform;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
+import ru.practicum.shareit.item.mapper.CommentMapper;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.mapper.UserMapper;
 

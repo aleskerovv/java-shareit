@@ -26,10 +26,11 @@ public class ControllerExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({MissingRequestHeaderException.class, IncorrectEmailException.class,
+    @ExceptionHandler({MissingRequestHeaderException.class,
+            IncorrectEmailException.class,
             ItemIsUnavailableException.class,
-            UnknownStateException.class,
-            MissingServletRequestParameterException.class})
+            MissingServletRequestParameterException.class,
+            IncorrectStateException.class})
     public ErrorMessage handleException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);

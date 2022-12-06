@@ -8,6 +8,8 @@ import ru.practicum.shareit.validation.Create;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Accessors(chain = true)
@@ -22,4 +24,5 @@ public class ItemDtoResponse {
     private UserDto owner;
     private BookingDtoInform lastBooking;
     private BookingDtoInform nextBooking;
+    private Set<CommentDtoResponse> comments = new HashSet<>();
 }

@@ -6,28 +6,32 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.dto.BookingDtoInform;
-import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exceptions.IncorrectStateException;
 import ru.practicum.shareit.exceptions.NoAccessException;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CommentDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoResponse;
+import ru.practicum.shareit.item.mapper.CommentMapper;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
+    private final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
     private final ItemRepository itemRepository;
@@ -36,21 +40,25 @@ public class ItemServiceImpl implements ItemService {
     private final UserMapper userMapper;
 
     @Override
-    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    @Transactional(readOnly = true)
     public List<ItemDtoResponse> getItemsByOwnerId(Long userId) {
         List<Item> items = itemRepository.getItemsByOwnerId(userId).stream()
                 .sorted(Comparator.comparing(Item::getId))
                 .collect(Collectors.toList());
 
-        return this.setBookingsDates(items);
+        List<ItemDtoResponse> itemsDto = this.setBookingsDates(items);
+        this.setCommentsToItem(itemsDto);
+
+        return itemsDto;
     }
 
     @Override
-    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    @Transactional(readOnly = true)
     public ItemDtoResponse getById(Long itemId, Long userId) {
         Item item = itemRepository.getReferenceById(itemId);
-
-        return this.setBookingsDates(item, userId);
+        ItemDtoResponse itemDto = this.setBookingsDates(item, userId);
+        this.setCommentsToItem(itemDto);
+        return itemDto;
     }
 
     @Override
@@ -77,7 +85,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    @Transactional(readOnly = true)
     public List<ItemDtoResponse> findByParams(String params) {
         if (params.isEmpty() || params.isBlank()) return new ArrayList<>();
 
@@ -87,9 +95,42 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public CommentDtoResponse addComment(CommentDto commentDto, Long userId, Long itemId) {
+        if (bookingRepository.findBookingsByUserAndItemId(itemId, userId, LocalDateTime.now()).isEmpty()) {
+            throw new IncorrectStateException("You are not have any ended booking for this item");
+        }
+        Comment comment = commentMapper.toCommentEntity(commentDto);
+        comment.setCreated(LocalDateTime.now());
+        comment.setItem(itemRepository.getItemById(itemId));
+        comment.setAuthor(userMapper.toUserEntity(userService.getUserById(userId)));
+
+        return commentMapper.toCommentDtoResponse(commentRepository.save(comment));
+    }
+
     private void checkItemsOwner(Long itemId, Long userId) {
         if (!Objects.equals(itemRepository.getReferenceById(itemId).getOwner().getId(), userId)) {
             throw new NoAccessException("You have no access to edit this item");
+        }
+    }
+
+    private void setCommentsToItem(ItemDtoResponse item) {
+        Set<CommentDtoResponse> comments = commentRepository.findCommentsByItemId(item.getId()).stream()
+                .map(commentMapper::toCommentDtoResponse)
+                .collect(Collectors.toSet());
+        item.setComments(comments);
+    }
+
+    private void setCommentsToItem(List<ItemDtoResponse> items) {
+        Map<Long, ItemDtoResponse> itemsDto = new HashMap<>();
+        items.forEach(item -> itemsDto.put(item.getId(), item));
+
+        Set<Comment> comments = new HashSet<>(commentRepository.findAll());
+
+        if (!itemsDto.isEmpty()) {
+            comments.forEach(comment -> Optional.ofNullable(itemsDto.get(comment.getItem().getId()))
+                    .ifPresent(i -> i.getComments().add(commentMapper.toCommentDtoResponse(comment))));
         }
     }
 

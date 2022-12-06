@@ -16,9 +16,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findBookingByBookerIdAndEndDateIsAfter(Long bookerId, LocalDateTime end, Sort sort);
 
-    @Query("SELECT bo from Booking bo where bo.startDate >= :start \n" +
-            "and bo.endDate <= :end and bo.id = :bookerId order by bo.startDate desc")
-    List<Booking> findCurrentBookings(Long bookerId, LocalDateTime start, LocalDateTime end);
+    @Query("SELECT bo from Booking bo where bo.booker.id = :bookerId and bo.startDate <= :start \n" +
+            "and bo.endDate >= :start order by bo.startDate desc")
+    List<Booking> findCurrentBookings(Long bookerId, LocalDateTime start);
 
     @Query("SELECT bo from Booking bo where bo.status = 'REJECTED' \n" +
             "and bo.booker.id = :bookerId \n" +
@@ -48,7 +48,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT bo from Booking bo inner join Item i on bo.item.id = i.id \n " +
             "where i.owner.id = :ownerId \n" +
-            "and bo.endDate <= :end and bo.startDate >= :start \n" +
+            "and bo.endDate >= :end and bo.startDate <= :start \n" +
             "order by bo.startDate desc")
     List<Booking> findCurrentBookingsByItemOwner(Long ownerId, LocalDateTime start, LocalDateTime end);
 
@@ -66,7 +66,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("select bo from Booking bo \n" +
             "where bo.item.id = :itemId \n " +
-            "and (bo.endDate <= :start or \n" +
-            "bo.startDate >= :start)")
+            "and (bo.endDate <= \n " +
+            "(select max(bo1.endDate) from Booking bo1 where bo1.item.id = :itemId and bo1.endDate <= :start) or \n" +
+            "bo.startDate >= \n" +
+            "(select min(bo1.startDate) from Booking bo1 where bo1.item.id = :itemId and bo1.startDate >= :start))")
     List<Booking> findBookingsByItemId(Long itemId, LocalDateTime start);
+
+    @Query("select bo from Booking bo \n" +
+            "where bo.item.id = :itemId \n" +
+            "and bo.booker.id = :userId \n" +
+            "and bo.endDate <= :time")
+    List<Booking> findBookingsByUserAndItemId(Long itemId, Long userId, LocalDateTime time);
 }
