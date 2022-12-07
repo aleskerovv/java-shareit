@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.dto.BookingDtoInform;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.repository.BookingRepository;
@@ -68,7 +68,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ItemDtoResponse create(ItemDto itemDto, Long userId) {
-        log.info("creating new item");
         Item item = itemMapper.toItemEntity(itemDto);
         item.setOwner(userMapper.toUserEntity(userService.getUserById(userId)));
         return itemMapper.toItemDtoResponse(itemRepository.save(item));
@@ -77,6 +76,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ItemDtoResponse update(ItemDto itemDto, Long itemId, Long userId) {
+        log.info("updating item with id {} by user {}", itemId, userId);
         this.checkItemsOwner(itemId, userId);
 
         Item item = Optional.of(itemRepository.getReferenceById(itemId)).orElseThrow(() ->
@@ -87,7 +87,7 @@ public class ItemServiceImpl implements ItemService {
                 : item.getDescription());
         item.setAvailable(itemDto.getAvailable() != null ? itemDto.getAvailable()
                 : item.getAvailable());
-
+        log.info("item with id {} updated", itemId);
         return itemMapper.toItemDtoResponse(itemRepository.save(item));
     }
 
@@ -113,6 +113,7 @@ public class ItemServiceImpl implements ItemService {
         comment.setItem(itemRepository.getItemById(itemId));
         comment.setAuthor(userMapper.toUserEntity(userService.getUserById(userId)));
 
+        log.info("user with id {} added a comment to item with id {}", userId, itemId);
         return commentMapper.toCommentDtoResponse(commentRepository.save(comment));
     }
 

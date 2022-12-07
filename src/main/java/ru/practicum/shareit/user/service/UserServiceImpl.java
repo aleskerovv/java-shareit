@@ -1,13 +1,14 @@
 package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.user.mapper.UserMapper;
-import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -40,6 +42,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = ConstraintViolationException.class)
     public UserDto createUser(UserDto userDto) {
+        log.info("creating new user");
         User user = userMapper.toUserEntity(userDto);
         return userMapper.toUserDto(userRepository.save(user));
     }
@@ -47,9 +50,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public UserDto updateUser(UserDto userDto, Long userId) {
+        log.info("updating user with id {}", userId);
+
         User user = userRepository.getReferenceById(userId);
         user.setName(userDto.getName() != null ? userDto.getName() : user.getName());
         user.setEmail(userDto.getEmail() != null ? this.isEmailExists(userDto.getEmail()) : user.getEmail());
+
+        log.info("user with id {} updated", userId);
         return userMapper.toUserDto(userRepository.save(user));
     }
 

@@ -6,12 +6,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.BookStatus;
-import ru.practicum.shareit.booking.Booking;
-import ru.practicum.shareit.booking.BookingState;
 import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
+import ru.practicum.shareit.booking.enums.BookStatus;
+import ru.practicum.shareit.booking.enums.BookingState;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.BookingsAccessException;
 import ru.practicum.shareit.exceptions.IncorrectStateException;
@@ -28,11 +28,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ru.practicum.shareit.booking.BookingState.valueOfLabel;
+import static ru.practicum.shareit.booking.enums.BookingState.valueOfLabel;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final BookingMapper mapper;
@@ -43,6 +43,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public BookingDtoResponse addBooking(BookingDtoCreate bookingDtoCreate, Long userId) {
+        log.info("adding new booking from user with id {}", userId);
         if (bookingDtoCreate.getEnd().isBefore(bookingDtoCreate.getStart())) {
             throw new IncorrectStateException("end_date can not be in present or greater then start_date");
         }
@@ -86,7 +87,7 @@ public class BookingServiceImpl implements BookingService {
             default:
                 throw new IncorrectStateException("Approve state can be only 'true' or 'false'");
         }
-
+        log.info("user with id {} approved booking with id {}", userId, bookingId);
         return mapper.toBookingDtoResponse(bookingRepository.save(booking));
     }
 

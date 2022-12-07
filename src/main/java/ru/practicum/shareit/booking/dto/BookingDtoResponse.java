@@ -3,7 +3,7 @@ package ru.practicum.shareit.booking.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import ru.practicum.shareit.booking.BookStatus;
+import ru.practicum.shareit.booking.enums.BookStatus;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
 
