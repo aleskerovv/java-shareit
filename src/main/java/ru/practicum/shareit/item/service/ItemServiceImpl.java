@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +24,14 @@ import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ItemServiceImpl implements ItemService {
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
@@ -55,15 +58,18 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(readOnly = true)
     public ItemDtoResponse getById(Long itemId, Long userId) {
-        Item item = itemRepository.getReferenceById(itemId);
+        Item item = Optional.of(itemRepository.getReferenceById(itemId))
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Item with id %d not found", itemId)));
         ItemDtoResponse itemDto = this.setBookingsDates(item, userId);
         this.setCommentsToItem(itemDto);
         return itemDto;
     }
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public ItemDtoResponse create(ItemDto itemDto, Long userId) {
-        Item item = itemMapper.toItemEntity(itemDto, userId);
+        log.info("creating new item");
+        Item item = itemMapper.toItemEntity(itemDto);
         item.setOwner(userMapper.toUserEntity(userService.getUserById(userId)));
         return itemMapper.toItemDtoResponse(itemRepository.save(item));
     }
@@ -73,7 +79,8 @@ public class ItemServiceImpl implements ItemService {
     public ItemDtoResponse update(ItemDto itemDto, Long itemId, Long userId) {
         this.checkItemsOwner(itemId, userId);
 
-        Item item = itemRepository.getReferenceById(itemId);
+        Item item = Optional.of(itemRepository.getReferenceById(itemId)).orElseThrow(() ->
+                new EntityNotFoundException(String.format("Item with id %d not found", itemId)));
 
         item.setName(itemDto.getName() != null ? itemDto.getName() : item.getName());
         item.setDescription(itemDto.getDescription() != null ? itemDto.getDescription()
@@ -96,7 +103,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public CommentDtoResponse addComment(CommentDto commentDto, Long userId, Long itemId) {
         if (bookingRepository.findBookingsByUserAndItemId(itemId, userId, LocalDateTime.now()).isEmpty()) {
             throw new IncorrectStateException("You are not have any ended booking for this item");

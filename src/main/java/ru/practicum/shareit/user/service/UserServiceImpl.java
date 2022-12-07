@@ -10,13 +10,11 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.EntityNotFoundException;
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/******
- * TODO: Добавить обработку исключений SQL
- *****/
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -25,13 +23,14 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public UserDto getUserById(Long id) {
         return Optional.ofNullable(userMapper.toUserDto(userRepository.getReferenceById(id)))
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", id)));
     }
 
     @Override
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional(readOnly = true)
     public List<UserDto> getUsers() {
         return userRepository.findAll().stream()
                 .map(userMapper::toUserDto)
@@ -39,6 +38,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = ConstraintViolationException.class)
     public UserDto createUser(UserDto userDto) {
         User user = userMapper.toUserEntity(userDto);
         return userMapper.toUserDto(userRepository.save(user));
@@ -54,6 +54,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void deleteById(Long id) {
         userRepository.deleteById(id);
     }

@@ -13,8 +13,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> getItemsByOwnerId(Long userId);
 
-    @Query("SELECT it FROM Item it where lower(it.name) like %:params% or lower(it.description) like %:params% " +
-            "and it.available = TRUE")
+    @Query("SELECT it FROM Item it where it.available = true " +
+            "and (lower(it.name) like %:params% or lower(it.description) like %:params%)")
     List<Item> getItemsByParams(String params);
 
     @BaseMapper

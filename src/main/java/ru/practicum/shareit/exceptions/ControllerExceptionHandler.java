@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exceptions;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -36,6 +37,14 @@ public class ControllerExceptionHandler {
         log.warn(error);
 
         return new ErrorMessage(HttpStatus.BAD_REQUEST, error);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ErrorMessage handleConstraintException(DataIntegrityViolationException ex) {
+        String message = ex.getMostSpecificCause().getMessage();
+
+        return new ErrorMessage(HttpStatus.CONFLICT, message);
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)

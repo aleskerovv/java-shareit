@@ -2,22 +2,20 @@ package ru.practicum.shareit.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import ru.practicum.shareit.exceptions.NoAccessException;
-import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.user.repository.UserRepository;
-import ru.practicum.shareit.user.model.User;
+
+import javax.persistence.EntityNotFoundException;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -27,50 +25,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@Sql(scripts = {"file:src/test/resources/schema.sql", "file:src/test/resources/data.sql"})
 class ItemControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @BeforeAll
-    void create() throws Exception {
-        User user = new User();
-        user.setId(1L)
-                .setName("test user")
-                .setEmail("test@user.com");
-        userRepository.save(user);
-
-        User user2 = new User();
-        user2.setId(2L)
-                .setName("test 2user")
-                .setEmail("test2@user.com");
-        userRepository.save(user2);
-
-        User user3 = new User();
-        user3.setId(3L)
-                .setName("test 3user")
-                .setEmail("test3@user.com");
-        userRepository.save(user3);
-
-        ItemDto item = new ItemDto();
-        item.setName("Дрель")
-                .setDescription("Простая дрель")
-                .setAvailable(true);
-
-        mockMvc.perform(
-                post("/items")
-                        .content(objectMapper.writeValueAsString(item))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 1L)
-        ).andExpect(status().isOk());
-    }
 
     @Test
     void creates_newItem_andResponseCodeIs200() throws Exception {
@@ -101,8 +63,8 @@ class ItemControllerTest {
                                 .header("X-Sharer-User-Id", 125L)
                 ).andExpect(status().isNotFound())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
-                        instanceof NotFoundException))
-                .andExpect(jsonPath("$.message").value("User with id 125 not found"));
+                        instanceof EntityNotFoundException))
+                .andExpect(jsonPath("$.error").value("Unable to find ru.practicum.shareit.user.model.User with id 125"));
     }
 
     @Test
@@ -119,7 +81,7 @@ class ItemControllerTest {
                 ).andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof MissingRequestHeaderException))
-                .andExpect(jsonPath("$.message").value("Required request header " +
+                .andExpect(jsonPath("$.error").value("Required request header " +
                         "'X-Sharer-User-Id' for method parameter type Long is not present"));
     }
 
@@ -137,7 +99,7 @@ class ItemControllerTest {
                 ).andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof MethodArgumentNotValidException))
-                .andExpect(jsonPath("$.message").value("'name' can not be blank"));
+                .andExpect(jsonPath("$.error").value("'name' can not be blank"));
     }
 
     @Test
@@ -146,30 +108,18 @@ class ItemControllerTest {
                 get("/items/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 1L)
-        ).andExpect(jsonPath("$.name").value("Дрель"));
+        ).andExpect(jsonPath("$.name").value("item1"));
     }
 
     @Test
     void getAllItems_byUser() throws Exception {
-        ItemDto item = new ItemDto();
-        item.setName("Шуруповерт")
-                .setDescription("Не простой шуруповерт")
-                .setAvailable(true);
-
-        mockMvc.perform(
-                post("/items")
-                        .content(objectMapper.writeValueAsString(item))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 1L)
-        ).andExpect(status().isOk());
-
         mockMvc.perform(
                 get("/items")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 1L)
         ).andExpect(jsonPath("$.*", hasSize(2)))
-                .andExpect(jsonPath("$[0].name", is("Дрель")))
-                .andExpect(jsonPath("$[1].name", is("Шуруповерт")));
+                .andExpect(jsonPath("$[0].name", is("item1")))
+                .andExpect(jsonPath("$[1].name", is("item2")));
     }
 
     @Test
@@ -205,7 +155,7 @@ class ItemControllerTest {
         ).andExpect(status().isForbidden())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof NoAccessException))
-                .andExpect(jsonPath("$.message").value("You have no access to edit this item"));
+                .andExpect(jsonPath("$.error").value("You have no access to edit this item"));
     }
 
     @Test
@@ -254,7 +204,7 @@ class ItemControllerTest {
                 post("/items")
                         .content(objectMapper.writeValueAsString(item))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 1L)
+                        .header("X-Sharer-User-Id", 2L)
         ).andExpect(status().isOk());
 
         mockMvc.perform(

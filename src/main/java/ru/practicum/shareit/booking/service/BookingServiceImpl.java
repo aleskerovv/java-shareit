@@ -19,13 +19,16 @@ import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ru.practicum.shareit.booking.BookingState.*;
+import static ru.practicum.shareit.booking.BookingState.STATE_PARAMS;
+import static ru.practicum.shareit.booking.BookingState.valueOfLabel;
 
 @Service
 @Slf4j
@@ -38,13 +41,10 @@ public class BookingServiceImpl implements BookingService {
     private final ItemService itemService;
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public BookingDtoResponse addBooking(BookingDtoCreate bookingDtoCreate, Long userId) {
         if (bookingDtoCreate.getEnd().isBefore(bookingDtoCreate.getStart())) {
             throw new IncorrectStateException("end_date can not be in present or greater then start_date");
-        }
-
-        if (bookingDtoCreate.getStart().isBefore(LocalDateTime.now())) {
-            throw new IncorrectStateException("start_date can not be in present");
         }
 
         this.checkIsTheSameUser(bookingDtoCreate.getItemId(), userId);
@@ -84,14 +84,14 @@ public class BookingServiceImpl implements BookingService {
                 booking.setStatus(BookStatus.REJECTED);
                 break;
             default:
-                break;
+                throw new IncorrectStateException("Approve state can be only 'true' or 'false'");
         }
 
         return mapper.toBookingDtoResponse(bookingRepository.save(booking));
     }
 
     @Override
-    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    @Transactional(readOnly = true)
     public List<BookingDtoResponse> getBookingsByState(Long bookerId, String state) {
         userService.getUserById(bookerId);
 
@@ -112,12 +112,12 @@ public class BookingServiceImpl implements BookingService {
                 bookings = bookingRepository.findCurrentBookings(bookerId, time);
                 break;
             case PAST:
-                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsBefore(bookerId, time
-                        , Sort.by(Sort.Order.desc("startDate")));
+                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsBefore(bookerId, time,
+                        Sort.by(Sort.Order.desc("startDate")));
                 break;
             case FUTURE:
-                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsAfter(bookerId, time
-                        , Sort.by(Sort.Order.desc("startDate")));
+                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsAfter(bookerId, time,
+                        Sort.by(Sort.Order.desc("startDate")));
                 break;
             case REJECTED:
                 bookings = bookingRepository.findBookingByBookerIdAndStatusRejectedOrWaiting(bookerId,
@@ -137,7 +137,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    @Transactional(readOnly = true)
     public List<BookingDtoResponse> getBookingsByStateForOwner(Long userId, String state) {
         userService.getUserById(userId);
 
@@ -176,8 +176,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookingDtoResponse getBookingById(Long bookingId, Long userId) {
-        Booking booking = bookingRepository.getReferenceById(bookingId);
+        Booking booking = Optional.of(bookingRepository.getReferenceById(bookingId))
+                .orElseThrow(() ->
+                        new EntityNotFoundException(String.format("Booking with id %d not found", bookingId)));
         this.checkIsOwnerOrBooker(bookingId, booking.getItem().getId(), userId);
 
         return mapper.toBookingDtoResponse(booking);
