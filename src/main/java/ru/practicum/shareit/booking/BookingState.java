@@ -13,7 +13,7 @@ public enum BookingState {
     REJECTED("REJECTED");
 
     private final String label;
-    public static final Set<String> STATE_PARAMS = new HashSet<>();
+    private static final Set<String> STATE_PARAMS = new HashSet<>();
 
     BookingState(String label) {
         this.label = label;
@@ -28,6 +28,10 @@ public enum BookingState {
         return Stream.of(BookingState.values())
                 .filter(v -> v.label.equals(value))
                 .findFirst().orElse(null);
+    }
+
+    public static Set<String> getStateParams() {
+        return STATE_PARAMS;
     }
 
     @Override

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookStatus;
 import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingState;
 import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -27,7 +28,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ru.practicum.shareit.booking.BookingState.STATE_PARAMS;
 import static ru.practicum.shareit.booking.BookingState.valueOfLabel;
 
 @Service
@@ -98,7 +98,7 @@ public class BookingServiceImpl implements BookingService {
         LocalDateTime time = LocalDateTime.now();
         List<Booking> bookings = new ArrayList<>();
 
-        if (!STATE_PARAMS.contains(state)) {
+        if (!BookingState.getStateParams().contains(state)) {
             throw new IncorrectStateException(String.format("Unknown state: %s", state));
         }
 
@@ -144,7 +144,7 @@ public class BookingServiceImpl implements BookingService {
         LocalDateTime time = LocalDateTime.now();
         List<Booking> bookings = new ArrayList<>();
 
-        if (!STATE_PARAMS.contains(state)) {
+        if (!BookingState.getStateParams().contains(state)) {
             throw new IncorrectStateException(String.format("Unknown state: %s", state));
         }
 
