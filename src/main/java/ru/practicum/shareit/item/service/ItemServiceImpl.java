@@ -138,15 +138,7 @@ public class ItemServiceImpl implements ItemService {
         ItemDtoResponse itemDto = itemMapper.toItemDtoResponse(item);
 
         if (Objects.equals(itemDto.getOwner().getId(), userId)) {
-            List<BookingDtoInform> bookings = bookingRepository.findBookingsByItemId(itemDto.getId(),
-                            LocalDateTime.now()).stream()
-                    .limit(2)
-                    .sorted(Comparator.comparing(Booking::getStartDate))
-                    .map(bookingMapper::toBookingDtoInform)
-                    .collect(Collectors.toList());
-
-            itemDto.setLastBooking(!bookings.isEmpty() ? bookings.get(0) : null);
-            itemDto.setNextBooking(bookings.size() == 2 ? bookings.get(1) : null);
+            findBookings(itemDto);
         }
 
         return itemDto;
@@ -157,17 +149,19 @@ public class ItemServiceImpl implements ItemService {
                 .map(itemMapper::toItemDtoResponse)
                 .collect(Collectors.toList());
 
-        itemsDto.forEach(itemDto -> {
-            List<BookingDtoInform> bookings = bookingRepository.findBookingsByItemId(itemDto.getId(),
-                            LocalDateTime.now()).stream()
-                    .limit(2)
-                    .sorted(Comparator.comparing(Booking::getStartDate))
-                    .map(bookingMapper::toBookingDtoInform)
-                    .collect(Collectors.toList());
-            itemDto.setLastBooking(!bookings.isEmpty() ? bookings.get(0) : null);
-            itemDto.setNextBooking(bookings.size() == 2 ? bookings.get(1) : null);
-        });
+        itemsDto.forEach(this::findBookings);
 
         return itemsDto;
+    }
+
+    private void findBookings(ItemDtoResponse itemDto) {
+        List<BookingDtoInform> bookings = bookingRepository.findBookingsByItemId(itemDto.getId(),
+                        LocalDateTime.now()).stream()
+                .limit(2)
+                .sorted(Comparator.comparing(Booking::getStartDate))
+                .map(bookingMapper::toBookingDtoInform)
+                .collect(Collectors.toList());
+        itemDto.setLastBooking(!bookings.isEmpty() ? bookings.get(0) : null);
+        itemDto.setNextBooking(bookings.size() == 2 ? bookings.get(1) : null);
     }
 }

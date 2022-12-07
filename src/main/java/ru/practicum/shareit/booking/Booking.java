@@ -2,16 +2,12 @@ package ru.practicum.shareit.booking;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * TODO Sprint add-bookings.
- */
 @Data
 @Accessors(chain = true)
 @Entity

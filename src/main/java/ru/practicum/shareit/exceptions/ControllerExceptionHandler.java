@@ -48,7 +48,9 @@ public class ControllerExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler({EntityNotFoundException.class, UnsupportedOperationException.class})
+    @ExceptionHandler({EntityNotFoundException.class,
+            UnsupportedOperationException.class,
+            BookingsAccessException.class})
     public ErrorMessage handleNotFoundException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);

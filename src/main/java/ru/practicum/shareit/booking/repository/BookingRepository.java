@@ -4,6 +4,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import ru.practicum.shareit.booking.BookStatus;
 import ru.practicum.shareit.booking.Booking;
 
 import java.time.LocalDateTime;
@@ -20,15 +21,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "and bo.endDate >= :start order by bo.startDate desc")
     List<Booking> findCurrentBookings(Long bookerId, LocalDateTime start);
 
-    @Query("SELECT bo from Booking bo where bo.status = 'REJECTED' \n" +
+    @Query("SELECT bo from Booking bo where bo.status = :state \n" +
             "and bo.booker.id = :bookerId \n" +
             " order by bo.startDate desc")
-    List<Booking> findBookingByBookerIdAndStatusRejected(Long bookerId);
-
-    @Query("SELECT bo from Booking bo where bo.status = 'WAITING' \n" +
-            "and bo.booker.id = :bookerId \n" +
-            " order by bo.startDate desc")
-    List<Booking> findBookingByBookerIdAndStatusWaiting(Long bookerId);
+    List<Booking> findBookingByBookerIdAndStatusRejectedOrWaiting(Long bookerId, BookStatus state);
 
     @Query("SELECT bo from Booking bo inner join Item i on bo.item.id = i.id \n " +
             "where i.owner.id = :ownerId order by bo.startDate desc")
@@ -48,21 +44,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT bo from Booking bo inner join Item i on bo.item.id = i.id \n " +
             "where i.owner.id = :ownerId \n" +
-            "and bo.endDate >= :end and bo.startDate <= :start \n" +
+            "and bo.endDate >= :start and bo.startDate <= :start \n" +
             "order by bo.startDate desc")
-    List<Booking> findCurrentBookingsByItemOwner(Long ownerId, LocalDateTime start, LocalDateTime end);
+    List<Booking> findCurrentBookingsByItemOwner(Long ownerId, LocalDateTime start);
 
     @Query("SELECT bo from Booking bo inner join Item i on bo.item.id = i.id \n" +
             "where i.owner.id = :ownerId \n" +
-            "and bo.status = 'WAITING' \n" +
+            "and bo.status = :status \n" +
             " order by bo.startDate desc")
-    List<Booking> findBookingsByItemOwnerWithWaitingStatus(Long ownerId);
-
-    @Query("SELECT bo from Booking bo inner join Item i on bo.item.id = i.id \n" +
-            "where i.owner.id = :ownerId \n" +
-            "and bo.status = 'REJECTED' \n" +
-            " order by bo.startDate desc")
-    List<Booking> findBookingsByItemOwnerWithRejectedStatus(Long ownerId);
+    List<Booking> findBookingsByItemOwnerWithWaitingOrRejectedStatus(Long ownerId, BookStatus status);
 
     @Query("select bo from Booking bo \n" +
             "where bo.item.id = :itemId \n " +

@@ -12,9 +12,9 @@ import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exceptions.BookingsAccessException;
 import ru.practicum.shareit.exceptions.IncorrectStateException;
 import ru.practicum.shareit.exceptions.ItemIsUnavailableException;
-import ru.practicum.shareit.exceptions.NoAccessException;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
@@ -25,8 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static ru.practicum.shareit.booking.BookingState.STATE_PARAMS;
-import static ru.practicum.shareit.booking.BookingState.valueOfLabel;
+import static ru.practicum.shareit.booking.BookingState.*;
 
 @Service
 @Slf4j
@@ -96,6 +95,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingDtoResponse> getBookingsByState(Long bookerId, String state) {
         userService.getUserById(bookerId);
 
+        LocalDateTime time = LocalDateTime.now();
         List<Booking> bookings = new ArrayList<>();
 
         if (!STATE_PARAMS.contains(state)) {
@@ -109,21 +109,23 @@ public class BookingServiceImpl implements BookingService {
                         .collect(Collectors.toList());
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookings(bookerId, LocalDateTime.now());
+                bookings = bookingRepository.findCurrentBookings(bookerId, time);
                 break;
             case PAST:
-                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsBefore(bookerId, LocalDateTime.now()
+                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsBefore(bookerId, time
                         , Sort.by(Sort.Order.desc("startDate")));
                 break;
             case FUTURE:
-                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsAfter(bookerId, LocalDateTime.now()
+                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsAfter(bookerId, time
                         , Sort.by(Sort.Order.desc("startDate")));
                 break;
             case REJECTED:
-                bookings = bookingRepository.findBookingByBookerIdAndStatusRejected(bookerId);
+                bookings = bookingRepository.findBookingByBookerIdAndStatusRejectedOrWaiting(bookerId,
+                        BookStatus.REJECTED);
                 break;
             case WAITING:
-                bookings = bookingRepository.findBookingByBookerIdAndStatusWaiting(bookerId);
+                bookings = bookingRepository.findBookingByBookerIdAndStatusRejectedOrWaiting(bookerId,
+                        BookStatus.WAITING);
                 break;
             default:
                 break;
@@ -139,8 +141,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingDtoResponse> getBookingsByStateForOwner(Long userId, String state) {
         userService.getUserById(userId);
 
-        LocalDateTime endTime = LocalDateTime.now();
-        LocalDateTime startTime = LocalDateTime.now();
+        LocalDateTime time = LocalDateTime.now();
         List<Booking> bookings = new ArrayList<>();
 
         if (!STATE_PARAMS.contains(state)) {
@@ -152,19 +153,21 @@ public class BookingServiceImpl implements BookingService {
                 bookings = bookingRepository.findBookingsByItemOwnerId(userId);
                 break;
             case PAST:
-                bookings = bookingRepository.findBookingsByItemOwnerIdInPast(userId, endTime);
+                bookings = bookingRepository.findBookingsByItemOwnerIdInPast(userId, time);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findBookingsByItemOwnerIdInFuture(userId, endTime);
+                bookings = bookingRepository.findBookingsByItemOwnerIdInFuture(userId, time);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookingsByItemOwner(userId, startTime, endTime);
+                bookings = bookingRepository.findCurrentBookingsByItemOwner(userId, time);
                 break;
             case WAITING:
-                bookings = bookingRepository.findBookingsByItemOwnerWithWaitingStatus(userId);
+                bookings = bookingRepository.findBookingsByItemOwnerWithWaitingOrRejectedStatus(userId,
+                        BookStatus.WAITING);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findBookingsByItemOwnerWithRejectedStatus(userId);
+                bookings = bookingRepository.findBookingsByItemOwnerWithWaitingOrRejectedStatus(userId,
+                        BookStatus.REJECTED);
         }
 
         return bookings.stream()
@@ -175,27 +178,27 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDtoResponse getBookingById(Long bookingId, Long userId) {
         Booking booking = bookingRepository.getReferenceById(bookingId);
-        this.check(bookingId, booking.getItem().getId(), userId);
+        this.checkIsOwnerOrBooker(bookingId, booking.getItem().getId(), userId);
 
         return mapper.toBookingDtoResponse(booking);
     }
 
     private void checkIsTheSameUser(Long itemId, Long userId) {
         if (Objects.equals(itemService.getById(itemId, userId).getOwner().getId(), userId)) {
-            throw new NoAccessException("You can not book your own item");
+            throw new BookingsAccessException("You can not book your own item");
         }
     }
 
     private void checkIsOwner(Long itemId, Long ownerId) {
         if (!Objects.equals(itemService.getById(itemId, ownerId).getOwner().getId(), ownerId)) {
-            throw new NoAccessException("You have no access to edit this booking");
+            throw new BookingsAccessException("You have no access to edit this booking");
         }
     }
 
-    private void check(Long bookingId, Long itemId, Long userId) {
+    private void checkIsOwnerOrBooker(Long bookingId, Long itemId, Long userId) {
         if (!Objects.equals(bookingRepository.getReferenceById(bookingId).getBooker().getId(), userId)
                 && !Objects.equals(itemService.getById(itemId, userId).getOwner().getId(), userId)) {
-            throw new NoAccessException("You have no access to this booking");
+            throw new BookingsAccessException("You have no access to this booking");
         }
     }
 }
