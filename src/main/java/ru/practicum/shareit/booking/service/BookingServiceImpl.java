@@ -48,7 +48,7 @@ public class BookingServiceImpl implements BookingService {
             throw new IncorrectStateException("end_date can not be in present or greater then start_date");
         }
 
-        this.checkIsTheSameUser(bookingDtoCreate.getItemId(), userId);
+        this.checkUserIsOwner(bookingDtoCreate.getItemId(), userId);
 
         if (!itemService.getById(bookingDtoCreate.getItemId(), userId).getAvailable()) {
             throw new ItemIsUnavailableException(String.format("Item with id %d is unavailable to book",
@@ -105,9 +105,8 @@ public class BookingServiceImpl implements BookingService {
 
         switch (valueOfLabel(state)) {
             case ALL:
-                bookings = bookingRepository.findAll(Sort.by(Sort.Order.desc("startDate"))).stream()
-                        .filter(v -> v.getBooker().getId().equals(bookerId))
-                        .collect(Collectors.toList());
+                bookings = bookingRepository.findAllByBookerId(bookerId,
+                        Sort.by(Sort.Order.desc("startDate")));
                 break;
             case CURRENT:
                 bookings = bookingRepository.findCurrentBookings(bookerId, time);
@@ -117,15 +116,15 @@ public class BookingServiceImpl implements BookingService {
                         Sort.by(Sort.Order.desc("startDate")));
                 break;
             case FUTURE:
-                bookings = bookingRepository.findBookingByBookerIdAndEndDateIsAfter(bookerId, time,
+                bookings = bookingRepository.findBookingByBookerIdAndStartDateIsAfter(bookerId, time,
                         Sort.by(Sort.Order.desc("startDate")));
                 break;
             case REJECTED:
-                bookings = bookingRepository.findBookingByBookerIdAndStatusRejectedOrWaiting(bookerId,
+                bookings = bookingRepository.findBookingByBookerIdByStatus(bookerId,
                         BookStatus.REJECTED);
                 break;
             case WAITING:
-                bookings = bookingRepository.findBookingByBookerIdAndStatusRejectedOrWaiting(bookerId,
+                bookings = bookingRepository.findBookingByBookerIdByStatus(bookerId,
                         BookStatus.WAITING);
                 break;
             default:
@@ -163,11 +162,11 @@ public class BookingServiceImpl implements BookingService {
                 bookings = bookingRepository.findCurrentBookingsByItemOwner(userId, time);
                 break;
             case WAITING:
-                bookings = bookingRepository.findBookingsByItemOwnerWithWaitingOrRejectedStatus(userId,
+                bookings = bookingRepository.findBookingsByItemOwnerByStatus(userId,
                         BookStatus.WAITING);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findBookingsByItemOwnerWithWaitingOrRejectedStatus(userId,
+                bookings = bookingRepository.findBookingsByItemOwnerByStatus(userId,
                         BookStatus.REJECTED);
         }
 
@@ -187,7 +186,7 @@ public class BookingServiceImpl implements BookingService {
         return mapper.toBookingDtoResponse(booking);
     }
 
-    private void checkIsTheSameUser(Long itemId, Long userId) {
+    private void checkUserIsOwner(Long itemId, Long userId) {
         if (Objects.equals(itemService.getById(itemId, userId).getOwner().getId(), userId)) {
             throw new BookingsAccessException("You can not book your own item");
         }
