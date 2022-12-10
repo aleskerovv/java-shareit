@@ -1,18 +1,22 @@
 package ru.practicum.shareit.item.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import ru.practicum.shareit.booking.mapper.BaseMapper;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 
-public interface ItemRepository {
+@Repository
+public interface ItemRepository extends JpaRepository<Item, Long> {
 
-    List<Item> getAllItems(Long userId);
+    List<Item> getItemsByOwnerId(Long userId);
 
-    Item getById(Long itemId);
+    @Query("SELECT it FROM Item it where it.available = true " +
+            "and (lower(it.name) like %:params% or lower(it.description) like %:params%)")
+    List<Item> getItemsByParams(String params);
 
-    Item create(Item item, Long userId);
-
-    Item update(Item item, Long itemId);
-
-    List<Item> findByParams(String params);
+    @BaseMapper
+    Item getItemById(Long id);
 }

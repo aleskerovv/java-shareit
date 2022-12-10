@@ -8,14 +8,12 @@ import java.time.LocalDateTime;
 @Data
 public class ErrorMessage {
     private LocalDateTime timestamp;
-    private Integer status;
+    private String status;
     private String error;
-    private String message;
 
     public ErrorMessage(HttpStatus httpStatus, String error) {
         this.timestamp = LocalDateTime.now();
-        this.status = httpStatus.value();
-        this.error = httpStatus.getReasonPhrase();
-        this.message = error;
+        this.status = String.format("%d: %s", httpStatus.value(), httpStatus.getReasonPhrase());
+        this.error = error;
     }
 }

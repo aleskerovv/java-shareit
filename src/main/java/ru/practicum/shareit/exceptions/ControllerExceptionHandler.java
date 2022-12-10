@@ -1,13 +1,16 @@
 package ru.practicum.shareit.exceptions;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Objects;
 
 @RestControllerAdvice
@@ -24,12 +27,24 @@ public class ControllerExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({MissingRequestHeaderException.class, IncorrectEmailException.class})
+    @ExceptionHandler({MissingRequestHeaderException.class,
+            IncorrectEmailException.class,
+            ItemIsUnavailableException.class,
+            MissingServletRequestParameterException.class,
+            IncorrectStateException.class})
     public ErrorMessage handleException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);
 
         return new ErrorMessage(HttpStatus.BAD_REQUEST, error);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ErrorMessage handleConstraintException(DataIntegrityViolationException ex) {
+        String message = ex.getMostSpecificCause().getMessage();
+
+        return new ErrorMessage(HttpStatus.CONFLICT, message);
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
@@ -42,7 +57,9 @@ public class ControllerExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler({NotFoundException.class, UnsupportedOperationException.class})
+    @ExceptionHandler({EntityNotFoundException.class,
+            UnsupportedOperationException.class,
+            BookingsAccessException.class})
     public ErrorMessage handleNotFoundException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);
@@ -50,13 +67,13 @@ public class ControllerExceptionHandler {
         return new ErrorMessage(HttpStatus.NOT_FOUND, error);
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(IllegalArgumentException.class)
     public ErrorMessage handleIllegalArgumentException(IllegalArgumentException ex) {
         String error = ex.getMessage();
         log.warn(error);
 
-        return new ErrorMessage(HttpStatus.INTERNAL_SERVER_ERROR, error);
+        return new ErrorMessage(HttpStatus.CONFLICT, error);
     }
 
     @ExceptionHandler
