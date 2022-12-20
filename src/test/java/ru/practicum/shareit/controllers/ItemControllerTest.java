@@ -116,10 +116,10 @@ class ItemControllerTest {
     @Test
     void getAllItems_byUser() throws Exception {
         mockMvc.perform(
-                get("/items")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 1L)
-        ).andExpect(jsonPath("$.*", hasSize(2)))
+                        get("/items")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("X-Sharer-User-Id", 1L)
+                ).andExpect(jsonPath("$.*", hasSize(2)))
                 .andExpect(jsonPath("$[0].name", is("item1")))
                 .andExpect(jsonPath("$[1].name", is("item2")));
     }
@@ -132,11 +132,11 @@ class ItemControllerTest {
                 .setAvailable(false);
 
         mockMvc.perform(
-                patch("/items/1")
-                        .content(objectMapper.writeValueAsString(item))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 1L)
-        ).andExpect(status().isOk())
+                        patch("/items/1")
+                                .content(objectMapper.writeValueAsString(item))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("X-Sharer-User-Id", 1L)
+                ).andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Дрель"))
                 .andExpect(jsonPath("$.available").value("false"));
 
@@ -150,11 +150,11 @@ class ItemControllerTest {
                 .setAvailable(false);
 
         mockMvc.perform(
-                patch("/items/1")
-                        .content(objectMapper.writeValueAsString(item))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 3L)
-        ).andExpect(status().isForbidden())
+                        patch("/items/1")
+                                .content(objectMapper.writeValueAsString(item))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("X-Sharer-User-Id", 3L)
+                ).andExpect(status().isForbidden())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof NoAccessException))
                 .andExpect(jsonPath("$.error").value("You have no access to edit this item"));

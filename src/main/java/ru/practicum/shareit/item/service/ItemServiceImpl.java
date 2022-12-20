@@ -2,6 +2,9 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +13,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.IncorrectStateException;
 import ru.practicum.shareit.exceptions.NoAccessException;
+import ru.practicum.shareit.exceptions.PaginationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.CommentDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -43,8 +47,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemDtoResponse> getItemsByOwnerId(Long userId) {
-        List<Item> items = itemRepository.getItemsByOwnerId(userId).stream()
+    public List<ItemDtoResponse> getItemsByOwnerId(Long userId, int from, int size) {
+        this.verifyPagination(from, size);
+        Pageable pageable = PageRequest.of(from, size);
+
+        List<Item> items = itemRepository.getItemsByOwnerId(userId, pageable).stream()
                 .sorted(Comparator.comparing(Item::getId))
                 .collect(Collectors.toList());
 
@@ -92,10 +99,12 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemDtoResponse> findByParams(String params) {
+    public List<ItemDtoResponse> findByParams(String params, int from, int size) {
+        this.verifyPagination(from, size);
+        Pageable pageable = PageRequest.of(from, size);
         if (params.isEmpty() || params.isBlank()) return new ArrayList<>();
 
-        return itemRepository.getItemsByParams(params.toLowerCase())
+        return itemRepository.getItemsByParams(params.toLowerCase(), pageable)
                 .stream()
                 .map(itemMapper::toItemDtoResponse)
                 .collect(Collectors.toList());
@@ -145,8 +154,6 @@ public class ItemServiceImpl implements ItemService {
         ItemDtoResponse itemDto = itemMapper.toItemDtoResponse(item);
 
         if (Objects.equals(itemDto.getOwner().getId(), userId)) {
-//            findBookings(itemDto);
-
             List<Booking> bookings = bookingRepository.findBookingsByItemId(itemDto.getId());
 
             Optional<Booking> lastBooking = bookings.stream()
@@ -189,5 +196,10 @@ public class ItemServiceImpl implements ItemService {
         }
 
         return items;
+    }
+
+    private void verifyPagination(int from, int size) {
+        if (from < 0) throw new PaginationException("Page index must not be less than zero");
+        if (size < 1) throw new PaginationException("Page size must not be less than one");
     }
 }

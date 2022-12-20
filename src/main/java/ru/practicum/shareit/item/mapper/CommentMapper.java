@@ -13,4 +13,7 @@ public interface CommentMapper {
 
     @Mapping(source = "author.name", target = "authorName")
     CommentDtoResponse toCommentDtoResponse(Comment comment);
+
+    @Mapping(source = "author.name", target = "authorName")
+    CommentDto toCommentDto(Comment comment);
 }

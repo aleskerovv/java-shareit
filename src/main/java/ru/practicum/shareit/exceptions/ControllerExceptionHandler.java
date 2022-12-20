@@ -31,7 +31,8 @@ public class ControllerExceptionHandler {
             IncorrectEmailException.class,
             ItemIsUnavailableException.class,
             MissingServletRequestParameterException.class,
-            IncorrectStateException.class})
+            IncorrectStateException.class,
+            PaginationException.class})
     public ErrorMessage handleException(Exception ex) {
         String error = ex.getMessage();
         log.warn(error);

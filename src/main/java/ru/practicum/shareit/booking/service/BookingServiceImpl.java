@@ -2,6 +2,7 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -16,6 +17,7 @@ import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.BookingsAccessException;
 import ru.practicum.shareit.exceptions.IncorrectStateException;
 import ru.practicum.shareit.exceptions.ItemIsUnavailableException;
+import ru.practicum.shareit.exceptions.PaginationException;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
@@ -28,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static ru.practicum.shareit.utils.PageConverter.toPageRequest;
 import static ru.practicum.shareit.booking.enums.BookingState.valueOfLabel;
 
 @Service
@@ -93,7 +96,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingDtoResponse> getBookingsByState(Long bookerId, String state) {
+    public List<BookingDtoResponse> getBookingsByState(Long bookerId, String state, int from, int size) {
+        this.verifyPagination(from, size);
+        Pageable pageable = toPageRequest(from, size).withSort(Sort.Direction.DESC, "startDate");
         userService.getUserById(bookerId);
 
         LocalDateTime time = LocalDateTime.now();
@@ -105,27 +110,26 @@ public class BookingServiceImpl implements BookingService {
 
         switch (valueOfLabel(state)) {
             case ALL:
-                bookings = bookingRepository.findAllByBookerId(bookerId,
-                        Sort.by(Sort.Order.desc("startDate")));
+                bookings = bookingRepository.findAllByBookerId(bookerId, pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookings(bookerId, time);
+                bookings = bookingRepository.findCurrentBookings(bookerId, time, pageable);
                 break;
             case PAST:
                 bookings = bookingRepository.findBookingByBookerIdAndEndDateIsBefore(bookerId, time,
-                        Sort.by(Sort.Order.desc("startDate")));
+                        pageable);
                 break;
             case FUTURE:
                 bookings = bookingRepository.findBookingByBookerIdAndStartDateIsAfter(bookerId, time,
-                        Sort.by(Sort.Order.desc("startDate")));
+                        pageable);
                 break;
             case REJECTED:
                 bookings = bookingRepository.findBookingByBookerIdByStatus(bookerId,
-                        BookStatus.REJECTED);
+                        BookStatus.REJECTED, pageable);
                 break;
             case WAITING:
                 bookings = bookingRepository.findBookingByBookerIdByStatus(bookerId,
-                        BookStatus.WAITING);
+                        BookStatus.WAITING, pageable);
                 break;
             default:
                 break;
@@ -138,7 +142,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingDtoResponse> getBookingsByStateForOwner(Long userId, String state) {
+    public List<BookingDtoResponse> getBookingsByStateForOwner(Long userId, String state, int from, int size) {
+        this.verifyPagination(from, size);
+        Pageable pageable = toPageRequest(from, size).withSort(Sort.Direction.DESC, "startDate");
         userService.getUserById(userId);
 
         LocalDateTime time = LocalDateTime.now();
@@ -150,24 +156,24 @@ public class BookingServiceImpl implements BookingService {
 
         switch (valueOfLabel(state)) {
             case ALL:
-                bookings = bookingRepository.findBookingsByItemOwnerId(userId);
+                bookings = bookingRepository.findBookingsByItemOwnerId(userId, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findBookingsByItemOwnerIdInPast(userId, time);
+                bookings = bookingRepository.findBookingsByItemOwnerIdInPast(userId, time, pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findBookingsByItemOwnerIdInFuture(userId, time);
+                bookings = bookingRepository.findBookingsByItemOwnerIdInFuture(userId, time, pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookingsByItemOwner(userId, time);
+                bookings = bookingRepository.findCurrentBookingsByItemOwner(userId, time, pageable);
                 break;
             case WAITING:
                 bookings = bookingRepository.findBookingsByItemOwnerByStatus(userId,
-                        BookStatus.WAITING);
+                        BookStatus.WAITING, pageable);
                 break;
             case REJECTED:
                 bookings = bookingRepository.findBookingsByItemOwnerByStatus(userId,
-                        BookStatus.REJECTED);
+                        BookStatus.REJECTED, pageable);
         }
 
         return bookings.stream()
@@ -203,5 +209,10 @@ public class BookingServiceImpl implements BookingService {
                 && !Objects.equals(itemService.getById(itemId, userId).getOwner().getId(), userId)) {
             throw new BookingsAccessException("You have no access to this booking");
         }
+    }
+
+    private void verifyPagination(int from, int size) {
+        if (from < 0) throw new PaginationException("Page index must not be less than zero");
+        if (size < 1) throw new PaginationException("Page size must not be less than one");
     }
 }

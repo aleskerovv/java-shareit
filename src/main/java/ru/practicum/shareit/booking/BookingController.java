@@ -27,8 +27,8 @@ public class BookingController {
 
     @PatchMapping("{bookingId}")
     public BookingDtoResponse addApprove(@RequestHeader("X-Sharer-User-Id") Long userId,
-                           @RequestParam(value = "approved") String approved,
-                           @PathVariable("bookingId") Long bookingId) {
+                                         @RequestParam(value = "approved") String approved,
+                                         @PathVariable("bookingId") Long bookingId) {
         return bookingService.addApprove(approved, userId, bookingId);
     }
 
@@ -41,15 +41,23 @@ public class BookingController {
     @GetMapping
     public List<BookingDtoResponse> getAllBookingByState(@RequestHeader("X-Sharer-User-Id") long userId,
                                                          @RequestParam(value = "state", required = false,
-                                                                 defaultValue = "ALL") String state) {
-        return bookingService.getBookingsByState(userId, state);
+                                                                 defaultValue = "ALL") String state,
+                                                         @RequestParam(required = false,
+                                                                 defaultValue = "0") int from,
+                                                         @RequestParam(required = false,
+                                                                 defaultValue = "10") int size) {
+        return bookingService.getBookingsByState(userId, state, from, size);
     }
 
     @GetMapping("owner")
     public List<BookingDtoResponse> getAllBookingsByStateForOwner(@RequestHeader("X-Sharer-User-Id") long userId,
                                                                   @RequestParam(value = "state",
                                                                           required = false,
-                                                                  defaultValue = "ALL") String state) {
-        return bookingService.getBookingsByStateForOwner(userId, state);
+                                                                          defaultValue = "ALL") String state,
+                                                                  @RequestParam(required = false,
+                                                                          defaultValue = "0") int from,
+                                                                  @RequestParam(required = false,
+                                                                          defaultValue = "10") int size) {
+        return bookingService.getBookingsByStateForOwner(userId, state, from, size);
     }
 }

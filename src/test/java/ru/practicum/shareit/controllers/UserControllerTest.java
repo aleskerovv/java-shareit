@@ -40,10 +40,10 @@ class UserControllerTest {
                 .setEmail("test_user@gmail.com");
 
         mockMvc.perform(
-                post("/users")
-                        .content(objectMapper.writeValueAsString(userDto))
-                        .contentType(MediaType.APPLICATION_JSON)
-        ).andExpect(status().isOk())
+                        post("/users")
+                                .content(objectMapper.writeValueAsString(userDto))
+                                .contentType(MediaType.APPLICATION_JSON)
+                ).andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("another user"));
     }
 
@@ -59,9 +59,9 @@ class UserControllerTest {
     @Test
     void getUser_byId_andUserNotFound() throws Exception {
         mockMvc.perform(
-                get("/users/15")
-                        .contentType(MediaType.APPLICATION_JSON)
-        ).andExpect(status().isNotFound())
+                        get("/users/15")
+                                .contentType(MediaType.APPLICATION_JSON)
+                ).andExpect(status().isNotFound())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof EntityNotFoundException))
                 .andExpect(jsonPath("$.error").value("Unable to find ru.practicum.shareit.user.model.User with id 15"));
@@ -72,10 +72,10 @@ class UserControllerTest {
         UserDto user = new UserDto();
         user.setName("Ivan");
         mockMvc.perform(
-                post("/users")
-                        .content(objectMapper.writeValueAsString(user))
-                        .contentType(MediaType.APPLICATION_JSON)
-        ).andExpect(status().isBadRequest())
+                        post("/users")
+                                .content(objectMapper.writeValueAsString(user))
+                                .contentType(MediaType.APPLICATION_JSON)
+                ).andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof MethodArgumentNotValidException))
                 .andExpect(jsonPath("$.error").value("email can not be null"));
@@ -85,7 +85,7 @@ class UserControllerTest {
     void createUser_whenEmailIsIncorrect() throws Exception {
         UserDto user = new UserDto();
         user.setName("Ivan")
-                        .setEmail("asd.com");
+                .setEmail("asd.com");
         mockMvc.perform(
                         post("/users")
                                 .content(objectMapper.writeValueAsString(user))

@@ -98,10 +98,10 @@ class BookingControllerTest {
     @Test
     void getBookings_byOwner_inFuture() throws Exception {
         mockMvc.perform(
-                get("/bookings/owner?state=FUTURE")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 1L)
-        ).andExpect(status().isOk())
+                        get("/bookings/owner?state=FUTURE")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("X-Sharer-User-Id", 1L)
+                ).andExpect(status().isOk())
                 .andExpect(jsonPath("$.*", hasSize(2)))
                 .andExpect(jsonPath("$[0].id", is(4)));
     }
@@ -113,8 +113,8 @@ class BookingControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("X-Sharer-User-Id", 1L)
                 ).andExpect(status().isOk())
-                .andExpect(jsonPath("$.*", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is(2)));
+                .andExpect(jsonPath("$.*", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(1)));
     }
 
     @Test
@@ -126,24 +126,24 @@ class BookingControllerTest {
         ).andExpect(status().isOk());
 
         mockMvc.perform(
-                patch("/bookings/1?approved=false")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 1L)
-        ).andExpect(status().isBadRequest())
+                        patch("/bookings/1?approved=false")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("X-Sharer-User-Id", 1L)
+                ).andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
-                instanceof IncorrectStateException))
+                        instanceof IncorrectStateException))
                 .andExpect(jsonPath("$.error").value("Booking is already REJECTED"));
     }
 
     @Test
     void fail_whenSetApprove_fromUserIsNotOwner() throws Exception {
         mockMvc.perform(
-                patch("/bookings/1?approved=false")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 2L)
-        ).andExpect(status().isNotFound())
+                        patch("/bookings/1?approved=false")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("X-Sharer-User-Id", 2L)
+                ).andExpect(status().isNotFound())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
-                instanceof BookingsAccessException))
+                        instanceof BookingsAccessException))
                 .andExpect(jsonPath("$.error").value("You have no access to edit this booking"));
     }
 }

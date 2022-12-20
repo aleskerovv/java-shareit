@@ -19,4 +19,5 @@ public class ItemDtoResponse {
     private BookingDtoInform lastBooking;
     private BookingDtoInform nextBooking;
     private Set<CommentDtoResponse> comments = new HashSet<>();
+    private Long requestId;
 }
