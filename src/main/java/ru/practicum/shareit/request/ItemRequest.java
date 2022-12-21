@@ -3,6 +3,7 @@ package ru.practicum.shareit.request;
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.CreationTimestamp;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
@@ -24,6 +25,7 @@ public class ItemRequest {
     @ManyToOne
     @JoinColumn(name = "requester_id", referencedColumnName = "id")
     private User requester;
+    @CreationTimestamp
     private LocalDateTime created;
 
     @Override

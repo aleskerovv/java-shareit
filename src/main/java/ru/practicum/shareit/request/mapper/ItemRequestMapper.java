@@ -9,6 +9,7 @@ import ru.practicum.shareit.user.mapper.UserMapper;
 
 @Mapper(componentModel = "spring", uses = {UserMapper.class, ItemMapper.class})
 public interface ItemRequestMapper {
+    ItemRequestDto toRequestDto(ItemRequest itemRequest);
     ItemRequestDtoResponse toRequestDtoResponse(ItemRequest itemRequest);
 
     ItemRequest toItemRequest(ItemRequestDto itemRequestDto);

@@ -30,8 +30,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ru.practicum.shareit.utils.PageConverter.toPageRequest;
 import static ru.practicum.shareit.booking.enums.BookingState.valueOfLabel;
+import static ru.practicum.shareit.utils.PageConverter.toPageRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -62,7 +62,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setBooker(userMapper.toUserEntity(userService.getUserById(userId)))
                 .setStatus(BookStatus.WAITING);
 
-        return mapper.toBookingDtoResponse(bookingRepository.save(booking));
+        BookingDtoResponse response = mapper.toBookingDtoResponse(bookingRepository.save(booking));
+        log.info("added new booking: {}", response);
+
+        return response;
     }
 
     @Override
@@ -90,8 +93,10 @@ public class BookingServiceImpl implements BookingService {
             default:
                 throw new IncorrectStateException("Approve state can be only 'true' or 'false'");
         }
+        BookingDtoResponse response = mapper.toBookingDtoResponse(bookingRepository.save(booking));
         log.info("user with id {} approved booking with id {}", userId, bookingId);
-        return mapper.toBookingDtoResponse(bookingRepository.save(booking));
+
+        return response;
     }
 
     @Override

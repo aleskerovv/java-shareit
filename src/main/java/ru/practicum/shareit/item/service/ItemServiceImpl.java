@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,11 +63,14 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(readOnly = true)
     public ItemDtoResponse getById(Long itemId, Long userId) {
-        Item item = Optional.of(itemRepository.getReferenceById(itemId))
-                .orElseThrow(() -> new EntityNotFoundException(String.format("Item with id %d not found", itemId)));
-        ItemDtoResponse itemDto = this.setBookingsDates(item, userId);
-        this.setCommentsToItem(itemDto);
-        return itemDto;
+        try {
+            Item item = itemRepository.getReferenceById(itemId);
+            ItemDtoResponse itemDto = this.setBookingsDates(item, userId);
+            this.setCommentsToItem(itemDto);
+            return itemDto;
+        } catch (EntityNotFoundException ex) {
+            throw new EntityNotFoundException(String.format("Item with id %d not found", itemId));
+        }
     }
 
     @Override
@@ -76,13 +78,15 @@ public class ItemServiceImpl implements ItemService {
     public ItemDtoResponse create(ItemDto itemDto, Long userId) {
         Item item = itemMapper.toItemEntity(itemDto);
         item.setOwner(userMapper.toUserEntity(userService.getUserById(userId)));
-        return itemMapper.toItemDtoResponse(itemRepository.save(item));
+
+        ItemDtoResponse response = itemMapper.toItemDtoResponse(itemRepository.save(item));
+        log.info("created new item: {}", response);
+        return response;
     }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ItemDtoResponse update(ItemDto itemDto, Long itemId, Long userId) {
-        log.info("updating item with id {} by user {}", itemId, userId);
         this.checkItemsOwner(itemId, userId);
 
         Item item = Optional.of(itemRepository.getReferenceById(itemId)).orElseThrow(() ->
@@ -93,8 +97,11 @@ public class ItemServiceImpl implements ItemService {
                 : item.getDescription());
         item.setAvailable(itemDto.getAvailable() != null ? itemDto.getAvailable()
                 : item.getAvailable());
-        log.info("item with id {} updated", itemId);
-        return itemMapper.toItemDtoResponse(itemRepository.save(item));
+
+        ItemDtoResponse response = itemMapper.toItemDtoResponse(itemRepository.save(item));
+        log.info("item with id {} updated by user with id {}", itemId, userId);
+
+        return response;
     }
 
     @Override
@@ -117,12 +124,13 @@ public class ItemServiceImpl implements ItemService {
             throw new IncorrectStateException("You are not have any ended booking for this item");
         }
         Comment comment = commentMapper.toCommentEntity(commentDto);
-        comment.setCreated(LocalDateTime.now());
-        comment.setItem(itemRepository.getItemById(itemId));
-        comment.setAuthor(userMapper.toUserEntity(userService.getUserById(userId)));
+        comment.setItem(itemRepository.getItemById(itemId))
+                .setAuthor(userMapper.toUserEntity(userService.getUserById(userId)));
 
+        CommentDtoResponse response = commentMapper.toCommentDtoResponse(commentRepository.save(comment));
         log.info("user with id {} added a comment to item with id {}", userId, itemId);
-        return commentMapper.toCommentDtoResponse(commentRepository.save(comment));
+
+        return response;
     }
 
     private void checkItemsOwner(Long itemId, Long userId) {
@@ -180,19 +188,19 @@ public class ItemServiceImpl implements ItemService {
 
         if (!items.isEmpty()) {
             items.forEach(item -> {
-                        Optional<Booking> lastBooking = bookings.stream()
-                                .filter(booking -> Objects.equals(booking.getItem().getId(), item.getId()))
-                                .filter(booking -> booking.getEndDate().isBefore(LocalDateTime.now()))
-                                .max(Comparator.comparing(Booking::getEndDate));
+                Optional<Booking> lastBooking = bookings.stream()
+                        .filter(booking -> Objects.equals(booking.getItem().getId(), item.getId()))
+                        .filter(booking -> booking.getEndDate().isBefore(LocalDateTime.now()))
+                        .max(Comparator.comparing(Booking::getEndDate));
 
-                        Optional<Booking> nextBooking = bookings.stream()
-                                .filter(booking -> Objects.equals(booking.getItem().getId(), item.getId()))
-                                .filter(booking -> booking.getStartDate().isAfter(LocalDateTime.now()))
-                                .min(Comparator.comparing(Booking::getStartDate));
+                Optional<Booking> nextBooking = bookings.stream()
+                        .filter(booking -> Objects.equals(booking.getItem().getId(), item.getId()))
+                        .filter(booking -> booking.getStartDate().isAfter(LocalDateTime.now()))
+                        .min(Comparator.comparing(Booking::getStartDate));
 
-                        item.setLastBooking(lastBooking.map(bookingMapper::toBookingDtoInform).orElse(null));
-                        item.setNextBooking(nextBooking.map(bookingMapper::toBookingDtoInform).orElse(null));
-                    });
+                item.setLastBooking(lastBooking.map(bookingMapper::toBookingDtoInform).orElse(null));
+                item.setNextBooking(nextBooking.map(bookingMapper::toBookingDtoInform).orElse(null));
+            });
         }
 
         return items;

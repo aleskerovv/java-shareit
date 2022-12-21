@@ -21,7 +21,6 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,27 +45,32 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemRequestDtoResponse createItemRequest(ItemRequestDto itemRequestDto, Long userId) {
         User requester = userMapper.toUserEntity(userService.getUserById(userId));
 
-        ItemRequest request = requestMapper.toItemRequest(itemRequestDto);
-        request.setRequester(requester)
-                .setCreated(LocalDateTime.now());
+        ItemRequest request = requestMapper.toItemRequest(itemRequestDto).setRequester(requester);
+        request.setRequester(requester);
+
         return requestMapper.toRequestDtoResponse(requestRepository.save(request));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ItemRequestDtoResponse getById(Long requestId, Long userId) {
         userService.getUserById(userId);
 
-        ItemRequest request = Optional.of(requestRepository.getReferenceById(requestId))
-                .orElseThrow(() -> new EntityNotFoundException(String.format("request with id %d not found",
-                        requestId)));
+        try {
+            ItemRequest request = requestRepository.getReferenceById(requestId);
 
-        ItemRequestDtoResponse requestDtoResponse = requestMapper.toRequestDtoResponse(request);
-        this.setItemInfoForRequests(requestDtoResponse);
+            ItemRequestDtoResponse requestDtoResponse = requestMapper.toRequestDtoResponse(request);
+            this.setItemInfoForRequests(requestDtoResponse);
 
-        return requestDtoResponse;
+            return requestDtoResponse;
+        } catch (EntityNotFoundException e) {
+            throw new EntityNotFoundException(String.format("request with id %d not found",
+                    requestId));
+        }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemRequestDtoResponse> findOwnRequests(Long userId) {
         userService.getUserById(userId);
         List<ItemRequestDtoResponse> requests = requestRepository.findAllByRequesterId(userId).stream()
@@ -78,6 +82,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemRequestDtoResponse> getAllRequests(Long userId, int from, int size) {
         if (from < 0) throw new PaginationException("Page index must not be less than zero");
         if (size < 1) throw new PaginationException("Page size must not be less than one");

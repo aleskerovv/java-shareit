@@ -18,11 +18,14 @@ values ('2022-12-03 13:22:22', '2022-12-04 13:22:22', 1, 3, 'APPROVED');
 insert into bookings(start_date, end_date, item_id, booker_id, status)
 values ('2022-12-08 13:22:22', '2022-12-10 13:22:22', 2, 2, 'WAITING');
 insert into bookings(start_date, end_date, item_id, booker_id, status)
-values ('2022-12-09 13:22:22', '2022-12-11 13:22:22', 3, 1, 'WAITING');
+values ('2022-12-21 13:22:22', '2030-12-11 13:22:22', 3, 1, 'WAITING');
 insert into bookings(start_date, end_date, item_id, booker_id, status)
-values ('2022-12-25 13:22:22', '2022-12-26 13:22:22', 1, 2, 'WAITING');
+values ('2030-12-25 13:22:22', '2030-12-26 13:22:22', 1, 2, 'WAITING');
 insert into bookings(start_date, end_date, item_id, booker_id, status)
-values ('2022-12-15 13:22:22', '2022-12-17 13:22:22', 2, 3, 'WAITING');
+values ('2030-12-15 13:22:22', '2030-12-17 13:22:22', 2, 3, 'WAITING');
 --comments data
 insert into comments(text, item_id, author_id, created)
-values ('awesome item and owner', 1, 3, '2022-12-07 15:30:00')
+values ('awesome item and owner', 1, 3, '2022-12-07 15:30:00');
+--requests data
+insert into requests(description, requester_id, created)
+values ('looking for new hummer', 3, '2022-12-20 15:30:00');
