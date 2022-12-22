@@ -70,6 +70,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void deleteById(Long id) {
+        this.getUserById(id);
         userRepository.deleteById(id);
+        log.info("deleted user with id {}", id);
     }
 }

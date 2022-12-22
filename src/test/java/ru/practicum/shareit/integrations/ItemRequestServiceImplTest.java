@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Transactional
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class ITRequestServiceImpl {
+class ItemRequestServiceImplTest {
     private final ItemRequestService requestService;
 
     @Test
@@ -45,7 +45,7 @@ class ITRequestServiceImpl {
     void test_findOwnRequest() {
         List<ItemRequestDtoResponse> responses = requestService.findOwnRequests(3L);
 
-        assertThat(responses.get(0).getItems().size(), equalTo(0));
+        assertThat(responses.get(0).getItems().size(), equalTo(1));
         assertThat(responses.get(0).getDescription(), equalTo("looking for new hummer"));
     }
 
@@ -64,5 +64,15 @@ class ITRequestServiceImpl {
         );
 
         assertThat("Page index must not be less than zero", equalTo(ex.getMessage()));
+    }
+
+    @Test
+    void test_getAllRequestsWithWongPagesSize_whenThrowsException() {
+        final PaginationException ex = assertThrows(
+                PaginationException.class,
+                () -> requestService.getAllRequests(1L, 1, 0)
+        );
+
+        assertThat("Page size must not be less than one", equalTo(ex.getMessage()));
     }
 }

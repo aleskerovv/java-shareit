@@ -15,7 +15,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> getItemsByOwnerId(Long userId, Pageable pageable);
 
     @Query("SELECT it FROM Item it where it.available = true " +
-            "and (lower(it.name) like %:params% or lower(it.description) like %:params%)")
+            "and (lower(it.name) like lower(concat('%', :params,'%')) " +
+            "or lower(it.description) like lower(concat('%', :params,'%')))")
     List<Item> getItemsByParams(String params, Pageable pageable);
 
     List<Item> getItemsByItemRequestId(Long requestId);

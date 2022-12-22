@@ -111,7 +111,7 @@ public class ItemServiceImpl implements ItemService {
         Pageable pageable = PageRequest.of(from, size);
         if (params.isEmpty() || params.isBlank()) return new ArrayList<>();
 
-        return itemRepository.getItemsByParams(params.toLowerCase(), pageable)
+        return itemRepository.getItemsByParams(params, pageable)
                 .stream()
                 .map(itemMapper::toItemDtoResponse)
                 .collect(Collectors.toList());

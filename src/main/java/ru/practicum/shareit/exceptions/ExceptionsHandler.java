@@ -15,7 +15,7 @@ import java.util.Objects;
 
 @RestControllerAdvice
 @Slf4j
-public class ControllerExceptionHandler {
+public class ExceptionsHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -28,7 +28,6 @@ public class ControllerExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({MissingRequestHeaderException.class,
-            IncorrectEmailException.class,
             ItemIsUnavailableException.class,
             MissingServletRequestParameterException.class,
             IncorrectStateException.class,
@@ -43,7 +42,8 @@ public class ControllerExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ErrorMessage handleConstraintException(DataIntegrityViolationException ex) {
-        String message = ex.getMostSpecificCause().getMessage();
+        String message = ex.getMessage();
+        log.warn(message);
 
         return new ErrorMessage(HttpStatus.CONFLICT, message);
     }

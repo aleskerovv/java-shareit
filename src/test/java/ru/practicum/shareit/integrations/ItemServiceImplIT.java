@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Transactional
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class ITItemServiceImplTest {
+class ItemServiceImplIT {
     private final ItemService itemService;
 
     @Test
@@ -55,6 +55,16 @@ class ITItemServiceImplTest {
         );
 
         assertThat("Page index must not be less than zero", equalTo(ex.getMessage()));
+    }
+
+    @Test
+    void test_whenWrongPaginationParamsOfSize_thenThrowsException() {
+        final PaginationException ex = assertThrows(
+                PaginationException.class,
+                () -> itemService.getItemsByOwnerId(1L, 1, 0)
+        );
+
+        assertThat("Page size must not be less than one", equalTo(ex.getMessage()));
     }
 
     @Test

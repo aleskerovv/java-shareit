@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.enums.BookingState.valueOfLabel;
@@ -189,12 +188,15 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public BookingDtoResponse getBookingById(Long bookingId, Long userId) {
-        Booking booking = Optional.of(bookingRepository.getReferenceById(bookingId))
-                .orElseThrow(() ->
-                        new EntityNotFoundException(String.format("Booking with id %d not found", bookingId)));
-        this.checkIsOwnerOrBooker(bookingId, booking.getItem().getId(), userId);
+        try {
+            Booking booking = bookingRepository.getReferenceById(bookingId);
 
-        return mapper.toBookingDtoResponse(booking);
+            this.checkIsOwnerOrBooker(bookingId, booking.getItem().getId(), userId);
+
+            return mapper.toBookingDtoResponse(booking);
+        } catch (EntityNotFoundException e) {
+            throw new EntityNotFoundException(String.format("Booking with id %d not found", bookingId));
+        }
     }
 
     private void checkUserIsOwner(Long itemId, Long userId) {

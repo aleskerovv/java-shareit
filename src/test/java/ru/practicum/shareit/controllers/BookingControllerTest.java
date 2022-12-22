@@ -1,6 +1,7 @@
 package ru.practicum.shareit.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @Sql(scripts = {"file:src/test/resources/schema.sql", "file:src/test/resources/data.sql"})
 class BookingControllerTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -36,7 +38,7 @@ class BookingControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void create_newBooking() throws Exception {
+    void createNewBooking_andStatus_isOk() throws Exception {
         BookingDtoCreate bookingDtoCreate = new BookingDtoCreate();
         bookingDtoCreate.setItemId(1L)
                 .setStart(LocalDateTime.now().plusDays(1))
@@ -145,5 +147,15 @@ class BookingControllerTest {
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof BookingsAccessException))
                 .andExpect(jsonPath("$.error").value("You have no access to edit this booking"));
+    }
+
+    @Test
+    @SneakyThrows
+    void getAllBookingByStateByUser_andReturn_2() {
+        mockMvc.perform(
+                get("/bookings?from=0&size=5")
+                        .header("X-Sharer-User-Id", 2L)
+        ).andExpect(status().isOk())
+                .andExpect(jsonPath("$.*", hasSize(2)));
     }
 }

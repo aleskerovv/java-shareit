@@ -1,6 +1,7 @@
 package ru.practicum.shareit.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +15,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import ru.practicum.shareit.exceptions.NoAccessException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import javax.persistence.EntityNotFoundException;
+
+import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -66,7 +70,7 @@ class ItemControllerTest {
                 ).andExpect(status().isNotFound())
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof EntityNotFoundException))
-                .andExpect(jsonPath("$.error").value("Unable to find ru.practicum.shareit.user.model.User with id 125"));
+                .andExpect(jsonPath("$.error").value("User with id 125 not found"));
     }
 
     @Test
@@ -215,5 +219,21 @@ class ItemControllerTest {
                                 .header("X-Sharer-User-Id", 1L)
                 ).andExpect(status().isOk())
                 .andExpect(jsonPath("$.*", hasSize(0)));
+    }
+
+    @Test
+    @SneakyThrows
+    void addComment_whenHaveEndedBookings() {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setAuthorName("Author")
+                .setText("best man in our world")
+                .setCreated(LocalDateTime.now());
+
+        mockMvc.perform(
+                post("/items/1/comment")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDto))
+                        .header("X-Sharer-User-Id", 3L)
+        ).andExpect(status().isOk());
     }
 }

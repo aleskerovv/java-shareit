@@ -22,7 +22,7 @@ import ru.practicum.shareit.item.mapper.ItemMapperImpl;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.mapper.UserMapperImpl;
 import ru.practicum.shareit.user.model.User;
@@ -61,8 +61,8 @@ class BookingServiceImplTest {
     Booking booking4 = new Booking();
     Booking booking5 = new Booking();
     Booking booking6 = new Booking();
-    static final Pageable PAGEABLE = PageConverter.toPageRequest(0, 10).
-            withSort(Sort.Direction.DESC, "startDate");
+    static final Pageable PAGEABLE = PageConverter.toPageRequest(0, 10)
+            .withSort(Sort.Direction.DESC, "startDate");
 
     @BeforeEach
     void init() {
@@ -123,8 +123,8 @@ class BookingServiceImplTest {
 
     @Test
     void addBooking() {
-        Mockito.doReturn(booking).when(bookingRepository)
-                .save(any(Booking.class));
+        Mockito.when(bookingRepository.save(any(Booking.class)))
+                .thenReturn(booking);
         Mockito.when(itemRepository.getItemById(anyLong()))
                 .thenReturn(item.setId(1L));
         Mockito.doReturn(itemMapper.toItemDtoResponse(item)).when(itemService)
@@ -391,7 +391,7 @@ class BookingServiceImplTest {
     @Test
     void test_whenOtherUserAddsApprove_andThrowsException() {
         Mockito.doReturn(booking).when(bookingRepository)
-                        .getReferenceById(1L);
+                .getReferenceById(1L);
         Mockito.doReturn(itemMapper.toItemDtoResponse(item)).when(itemService)
                 .getById(1L, 2L);
 

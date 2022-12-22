@@ -11,10 +11,10 @@ import ru.practicum.shareit.exceptions.PaginationException;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
-import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDtoResponse;
 import ru.practicum.shareit.request.mapper.ItemRequestMapper;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -48,7 +48,10 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         ItemRequest request = requestMapper.toItemRequest(itemRequestDto).setRequester(requester);
         request.setRequester(requester);
 
-        return requestMapper.toRequestDtoResponse(requestRepository.save(request));
+        ItemRequestDtoResponse response = requestMapper.toRequestDtoResponse(requestRepository.save(request));
+        log.info("created new item request: {}", response);
+
+        return response;
     }
 
     @Override
@@ -98,22 +101,22 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     private void setItemInfoForRequests(List<ItemRequestDtoResponse> requests) {
         if (!requests.isEmpty()) {
-            List<Long> requestsIdList = requests.stream().
-                    map(ItemRequestDtoResponse::getId)
+            List<Long> requestsIdList = requests.stream()
+                    .map(ItemRequestDtoResponse::getId)
                     .collect(Collectors.toList());
 
             List<Item> items = itemRepository.getItemsByRequestIdList(requestsIdList);
 
             Map<Long, ItemRequestDtoResponse> requestsMap = requests.stream()
-                            .collect(Collectors.toMap(ItemRequestDtoResponse::getId, Function.identity()));
+                    .collect(Collectors.toMap(ItemRequestDtoResponse::getId, Function.identity()));
             items.forEach(item -> Optional.ofNullable(requestsMap.get(item.getItemRequest().getId()))
                     .ifPresent(r -> r.getItems().add(itemMapper.toItemDtoInform(item))));
         }
     }
 
     private void setItemInfoForRequests(ItemRequestDtoResponse request) {
-            List<Item> items = itemRepository.getItemsByItemRequestId(request.getId());
+        List<Item> items = itemRepository.getItemsByItemRequestId(request.getId());
 
-            items.forEach(item -> request.getItems().add(itemMapper.toItemDtoInform(item)));
+        items.forEach(item -> request.getItems().add(itemMapper.toItemDtoInform(item)));
     }
 }

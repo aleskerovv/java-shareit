@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Transactional
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class ITBookingServiceImpl {
+class BookingServiceImplIT {
     private final BookingService bookingService;
 
     @Test
