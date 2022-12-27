@@ -45,7 +45,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemRequestDtoResponse createItemRequest(ItemRequestDto itemRequestDto, Long userId) {
         User requester = userMapper.toUserEntity(userService.getUserById(userId));
 
-        ItemRequest request = requestMapper.toItemRequest(itemRequestDto).setRequester(requester);
+        ItemRequest request = requestMapper.toItemRequest(itemRequestDto);
         request.setRequester(requester);
 
         ItemRequestDtoResponse response = requestMapper.toRequestDtoResponse(requestRepository.save(request));
