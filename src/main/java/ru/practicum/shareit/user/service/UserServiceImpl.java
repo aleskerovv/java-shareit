@@ -13,7 +13,6 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,8 +26,11 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserDto getUserById(Long id) {
-        return Optional.ofNullable(userMapper.toUserDto(userRepository.getReferenceById(id)))
-                .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", id)));
+        try {
+            return userMapper.toUserDto(userRepository.getReferenceById(id));
+        } catch (EntityNotFoundException e) {
+            throw new EntityNotFoundException(String.format("User with id %d not found", id));
+        }
     }
 
     @Override
@@ -44,7 +46,10 @@ public class UserServiceImpl implements UserService {
     public UserDto createUser(UserDto userDto) {
         log.info("creating new user");
         User user = userMapper.toUserEntity(userDto);
-        return userMapper.toUserDto(userRepository.save(user));
+
+        UserDto response = userMapper.toUserDto(userRepository.save(user));
+        log.info("created new user: {}", user);
+        return response;
     }
 
     @Override
@@ -54,23 +59,19 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.getReferenceById(userId);
         user.setName(userDto.getName() != null ? userDto.getName() : user.getName());
-        user.setEmail(userDto.getEmail() != null ? this.isEmailExists(userDto.getEmail()) : user.getEmail());
+        user.setEmail(userDto.getEmail() != null ? userDto.getEmail() : user.getEmail());
 
-        return userMapper.toUserDto(userRepository.save(user));
+        UserDto response = userMapper.toUserDto(userRepository.save(user));
+        log.info("updated user with id {}", userId);
+
+        return response;
     }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void deleteById(Long id) {
+        this.getUserById(id);
         userRepository.deleteById(id);
-    }
-
-    private String isEmailExists(String email) {
-        boolean isExists = userRepository.findAll().stream()
-                .map(User::getEmail)
-                .anyMatch(s -> s.equals(email));
-        if (isExists) throw new IllegalArgumentException("email already exists");
-
-        return email;
+        log.info("deleted user with id {}", id);
     }
 }

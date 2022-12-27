@@ -2,6 +2,7 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -16,6 +17,7 @@ import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.BookingsAccessException;
 import ru.practicum.shareit.exceptions.IncorrectStateException;
 import ru.practicum.shareit.exceptions.ItemIsUnavailableException;
+import ru.practicum.shareit.exceptions.PaginationException;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
@@ -25,10 +27,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.enums.BookingState.valueOfLabel;
+import static ru.practicum.shareit.utils.PageConverter.toPageRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +61,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setBooker(userMapper.toUserEntity(userService.getUserById(userId)))
                 .setStatus(BookStatus.WAITING);
 
-        return mapper.toBookingDtoResponse(bookingRepository.save(booking));
+        BookingDtoResponse response = mapper.toBookingDtoResponse(bookingRepository.save(booking));
+        log.info("added new booking: {}", response);
+
+        return response;
     }
 
     @Override
@@ -87,13 +92,17 @@ public class BookingServiceImpl implements BookingService {
             default:
                 throw new IncorrectStateException("Approve state can be only 'true' or 'false'");
         }
+        BookingDtoResponse response = mapper.toBookingDtoResponse(bookingRepository.save(booking));
         log.info("user with id {} approved booking with id {}", userId, bookingId);
-        return mapper.toBookingDtoResponse(bookingRepository.save(booking));
+
+        return response;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingDtoResponse> getBookingsByState(Long bookerId, String state) {
+    public List<BookingDtoResponse> getBookingsByState(Long bookerId, String state, int from, int size) {
+        this.verifyPagination(from, size);
+        Pageable pageable = toPageRequest(from, size).withSort(Sort.Direction.DESC, "startDate");
         userService.getUserById(bookerId);
 
         LocalDateTime time = LocalDateTime.now();
@@ -105,27 +114,26 @@ public class BookingServiceImpl implements BookingService {
 
         switch (valueOfLabel(state)) {
             case ALL:
-                bookings = bookingRepository.findAllByBookerId(bookerId,
-                        Sort.by(Sort.Order.desc("startDate")));
+                bookings = bookingRepository.findAllByBookerId(bookerId, pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookings(bookerId, time);
+                bookings = bookingRepository.findCurrentBookings(bookerId, time, pageable);
                 break;
             case PAST:
                 bookings = bookingRepository.findBookingByBookerIdAndEndDateIsBefore(bookerId, time,
-                        Sort.by(Sort.Order.desc("startDate")));
+                        pageable);
                 break;
             case FUTURE:
                 bookings = bookingRepository.findBookingByBookerIdAndStartDateIsAfter(bookerId, time,
-                        Sort.by(Sort.Order.desc("startDate")));
+                        pageable);
                 break;
             case REJECTED:
                 bookings = bookingRepository.findBookingByBookerIdByStatus(bookerId,
-                        BookStatus.REJECTED);
+                        BookStatus.REJECTED, pageable);
                 break;
             case WAITING:
                 bookings = bookingRepository.findBookingByBookerIdByStatus(bookerId,
-                        BookStatus.WAITING);
+                        BookStatus.WAITING, pageable);
                 break;
             default:
                 break;
@@ -138,7 +146,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingDtoResponse> getBookingsByStateForOwner(Long userId, String state) {
+    public List<BookingDtoResponse> getBookingsByStateForOwner(Long userId, String state, int from, int size) {
+        this.verifyPagination(from, size);
+        Pageable pageable = toPageRequest(from, size).withSort(Sort.Direction.DESC, "startDate");
         userService.getUserById(userId);
 
         LocalDateTime time = LocalDateTime.now();
@@ -150,24 +160,24 @@ public class BookingServiceImpl implements BookingService {
 
         switch (valueOfLabel(state)) {
             case ALL:
-                bookings = bookingRepository.findBookingsByItemOwnerId(userId);
+                bookings = bookingRepository.findBookingsByItemOwnerId(userId, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findBookingsByItemOwnerIdInPast(userId, time);
+                bookings = bookingRepository.findBookingsByItemOwnerIdInPast(userId, time, pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findBookingsByItemOwnerIdInFuture(userId, time);
+                bookings = bookingRepository.findBookingsByItemOwnerIdInFuture(userId, time, pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookingsByItemOwner(userId, time);
+                bookings = bookingRepository.findCurrentBookingsByItemOwner(userId, time, pageable);
                 break;
             case WAITING:
                 bookings = bookingRepository.findBookingsByItemOwnerByStatus(userId,
-                        BookStatus.WAITING);
+                        BookStatus.WAITING, pageable);
                 break;
             case REJECTED:
                 bookings = bookingRepository.findBookingsByItemOwnerByStatus(userId,
-                        BookStatus.REJECTED);
+                        BookStatus.REJECTED, pageable);
         }
 
         return bookings.stream()
@@ -178,12 +188,15 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public BookingDtoResponse getBookingById(Long bookingId, Long userId) {
-        Booking booking = Optional.of(bookingRepository.getReferenceById(bookingId))
-                .orElseThrow(() ->
-                        new EntityNotFoundException(String.format("Booking with id %d not found", bookingId)));
-        this.checkIsOwnerOrBooker(bookingId, booking.getItem().getId(), userId);
+        try {
+            Booking booking = bookingRepository.getReferenceById(bookingId);
 
-        return mapper.toBookingDtoResponse(booking);
+            this.checkIsOwnerOrBooker(bookingId, booking.getItem().getId(), userId);
+
+            return mapper.toBookingDtoResponse(booking);
+        } catch (EntityNotFoundException e) {
+            throw new EntityNotFoundException(String.format("Booking with id %d not found", bookingId));
+        }
     }
 
     private void checkUserIsOwner(Long itemId, Long userId) {
@@ -203,5 +216,10 @@ public class BookingServiceImpl implements BookingService {
                 && !Objects.equals(itemService.getById(itemId, userId).getOwner().getId(), userId)) {
             throw new BookingsAccessException("You have no access to this booking");
         }
+    }
+
+    private void verifyPagination(int from, int size) {
+        if (from < 0) throw new PaginationException("Page index must not be less than zero");
+        if (size < 1) throw new PaginationException("Page size must not be less than one");
     }
 }

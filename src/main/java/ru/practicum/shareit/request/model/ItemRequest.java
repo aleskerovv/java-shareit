@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.request.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,20 +19,15 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Accessors(chain = true)
 @Entity
-@Table(name = "comments")
-public class Comment {
+@Table(name = "requests")
+public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String text;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", referencedColumnName = "id")
-    @ToString.Exclude
-    private Item item;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", referencedColumnName = "id")
-    @ToString.Exclude
-    private User author;
+    private String description;
+    @ManyToOne
+    @JoinColumn(name = "requester_id", referencedColumnName = "id")
+    private User requester;
     @CreationTimestamp
     private LocalDateTime created;
 
@@ -40,8 +35,8 @@ public class Comment {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Comment comment = (Comment) o;
-        return id != null && Objects.equals(id, comment.id);
+        ItemRequest that = (ItemRequest) o;
+        return id != null && Objects.equals(id, that.id);
     }
 
     @Override

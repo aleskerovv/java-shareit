@@ -17,8 +17,13 @@ public interface BookingMapper {
     BookingDtoInform toBookingDtoInform(Booking booking);
 
 
-    @Mapping(target = "item", source = "bookingDtoCreate.itemId", qualifiedBy = BaseMapper.class)
-    @Mapping(target = "startDate", source = "bookingDtoCreate.start")
-    @Mapping(target = "endDate", source = "bookingDtoCreate.end")
+    @Mapping(target = "item", source = "itemId", qualifiedBy = BaseMapper.class)
+    @Mapping(target = "startDate", source = "start")
+    @Mapping(target = "endDate", source = "end")
     Booking toBookingEntity(BookingDtoCreate bookingDtoCreate);
+
+    @Mapping(target = "start", source = "startDate")
+    @Mapping(target = "end", source = "endDate")
+    @Mapping(target = "itemId", source = "item.id")
+    BookingDtoCreate toBookingDtoCreate(Booking booking);
 }
