@@ -35,11 +35,11 @@ class BookingDtoResponseJsonTest {
                 .setEndDate(LocalDateTime.now().plusDays(15))
                 .setBooker(userDto)
                 .setItem(itemDto)
-                .setStatus(BookStatus.REJECTED);
+                .setStatus(BookStatus.WAITING);
 
         JsonContent<BookingDtoResponse> result = json.write(dto);
 
-        assertThat(result).extractingJsonPathStringValue("$.status").isEqualTo("REJECTED");
+        assertThat(result).extractingJsonPathStringValue("$.status").isEqualTo("WAITING");
         assertThat(result).extractingJsonPathValue("$.item").isNotNull();
         assertThat(result).extractingJsonPathValue("$.booker").isNotNull();
         assertThat(result).extractingJsonPathStringValue("$.start").isNotNull();
