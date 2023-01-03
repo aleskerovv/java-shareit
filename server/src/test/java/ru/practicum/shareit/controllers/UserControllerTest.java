@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureTestDatabase
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@Sql(scripts = {"file:src/test/resources/test-schema.sql", "file:src/test/resources/data.sql"})
+@Sql(scripts = {"file:src/test/resources/test-schema.sql", "file:src/test/resources/test-data.sql"})
 class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
