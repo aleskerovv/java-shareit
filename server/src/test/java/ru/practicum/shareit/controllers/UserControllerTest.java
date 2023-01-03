@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureTestDatabase
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@Sql(scripts = {"file:src/test/resources/schema.sql", "file:src/test/resources/data.sql"})
+@Sql(scripts = {"file:src/test/resources/test-schema.sql", "file:src/test/resources/data.sql"})
 class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -66,35 +66,6 @@ class UserControllerTest {
                 .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
                         instanceof EntityNotFoundException))
                 .andExpect(jsonPath("$.error").value("User with id 15 not found"));
-    }
-
-    @Test
-    void createUser_whenEmailIsNull() throws Exception {
-        UserDto user = new UserDto();
-        user.setName("Ivan");
-        mockMvc.perform(
-                        post("/users")
-                                .content(objectMapper.writeValueAsString(user))
-                                .contentType(MediaType.APPLICATION_JSON)
-                ).andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
-                        instanceof MethodArgumentNotValidException))
-                .andExpect(jsonPath("$.error").value("email can not be null"));
-    }
-
-    @Test
-    void createUser_whenEmailIsIncorrect() throws Exception {
-        UserDto user = new UserDto();
-        user.setName("Ivan")
-                .setEmail("asd.com");
-        mockMvc.perform(
-                        post("/users")
-                                .content(objectMapper.writeValueAsString(user))
-                                .contentType(MediaType.APPLICATION_JSON)
-                ).andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
-                        instanceof MethodArgumentNotValidException))
-                .andExpect(jsonPath("$.error").value("must be a well-formed email address"));
     }
 
     @Test

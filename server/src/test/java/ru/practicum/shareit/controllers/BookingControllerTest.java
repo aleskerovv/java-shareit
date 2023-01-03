@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureTestDatabase
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@Sql(scripts = {"file:src/test/resources/schema.sql", "file:src/test/resources/data.sql"})
+@Sql(scripts = {"file:src/test/resources/test-schema.sql", "file:src/test/resources/data.sql"})
 class BookingControllerTest {
 
     @Autowired
@@ -50,21 +50,6 @@ class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 2L)
         ).andExpect(status().isOk());
-    }
-
-    @Test
-    void create_newBooking_whenStartInPast() throws Exception {
-        BookingDtoCreate bookingDtoCreate = new BookingDtoCreate();
-        bookingDtoCreate.setItemId(1L)
-                .setStart(LocalDateTime.now().minusDays(1))
-                .setEnd(LocalDateTime.now().plusDays(15));
-
-        mockMvc.perform(
-                post("/bookings")
-                        .content(objectMapper.writeValueAsString(bookingDtoCreate))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", 2L)
-        ).andExpect(status().isBadRequest());
     }
 
     @Test

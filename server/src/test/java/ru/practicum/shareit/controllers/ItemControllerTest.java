@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureTestDatabase
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@Sql(scripts = {"file:src/test/resources/schema.sql", "file:src/test/resources/data.sql"})
+@Sql(scripts = {"file:src/test/resources/test-schema.sql", "file:src/test/resources/data.sql"})
 class ItemControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -89,23 +89,6 @@ class ItemControllerTest {
                         instanceof MissingRequestHeaderException))
                 .andExpect(jsonPath("$.error").value("Required request header " +
                         "'X-Sharer-User-Id' for method parameter type Long is not present"));
-    }
-
-    @Test
-    void creates_newItem_whenName_isNull() throws Exception {
-        ItemDto item = new ItemDto();
-        item.setDescription("Простая дрель")
-                .setAvailable(true);
-
-        mockMvc.perform(
-                        post("/items")
-                                .content(objectMapper.writeValueAsString(item))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("X-Sharer-User-Id", 1L)
-                ).andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException()
-                        instanceof MethodArgumentNotValidException))
-                .andExpect(jsonPath("$.error").value("'name' can not be blank"));
     }
 
     @Test

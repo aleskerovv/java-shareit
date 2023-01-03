@@ -57,21 +57,6 @@ class ItemRequestControllerTest {
 
     @Test
     @SneakyThrows
-    void createRequest_whenNotValid_andStatusBadRequest() {
-        ItemRequestDto itemRequestDto = new ItemRequestDto();
-        itemRequestDto.setDescription(null);
-
-        mockMvc.perform(post("/requests")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(itemRequestDto))
-                        .header(USER_ID, 1L))
-                .andExpect(status().isBadRequest());
-
-        verify(requestService, never()).createItemRequest(itemRequestDto, 1L);
-    }
-
-    @Test
-    @SneakyThrows
     void getUsersRequests_andStatusIsOk() {
         mockMvc.perform(get("/requests")
                 .header(USER_ID, 1L))
