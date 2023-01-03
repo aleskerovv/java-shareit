@@ -101,7 +101,7 @@ class ItemControllerTest {
     @Test
     void getAllItems_byUser() throws Exception {
         mockMvc.perform(
-                        get("/items")
+                        get("/items?from=0&size=10")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("X-Sharer-User-Id", 1L)
                 ).andExpect(jsonPath("$.*", hasSize(2)))
@@ -172,7 +172,7 @@ class ItemControllerTest {
         ).andExpect(status().isOk());
 
         mockMvc.perform(
-                        get("/items/search?text=пил")
+                        get("/items/search?text=пил&from=0&size=10")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("X-Sharer-User-Id", 1L)
                 ).andExpect(status().isOk())
@@ -195,7 +195,7 @@ class ItemControllerTest {
         ).andExpect(status().isOk());
 
         mockMvc.perform(
-                        get("/items/search?text=кос")
+                        get("/items/search?text=кос&from=0&size=10")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("X-Sharer-User-Id", 1L)
                 ).andExpect(status().isOk())

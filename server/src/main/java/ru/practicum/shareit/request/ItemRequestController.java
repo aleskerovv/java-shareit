@@ -6,7 +6,6 @@ import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDtoResponse;
 import ru.practicum.shareit.request.service.ItemRequestService;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -20,7 +19,7 @@ public class ItemRequestController {
     }
 
     @PostMapping
-    public ItemRequestDtoResponse createNewRequest(@Valid @RequestBody ItemRequestDto requestDto,
+    public ItemRequestDtoResponse createNewRequest(@RequestBody ItemRequestDto requestDto,
                                                    @RequestHeader("X-Sharer-User-Id") Long userId) {
         return itemRequestService.createItemRequest(requestDto, userId);
     }
@@ -38,8 +37,8 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     public List<ItemRequestDtoResponse> getAllRequests(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                       @RequestParam(required = false, defaultValue = "0") int from,
-                                                       @RequestParam(required = false, defaultValue = "10") int size) {
+                                                       @RequestParam(required = false) int from,
+                                                       @RequestParam(required = false) int size) {
         return itemRequestService.getAllRequests(userId, from, size);
     }
 }

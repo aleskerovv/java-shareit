@@ -6,9 +6,6 @@ import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.service.BookingService;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -22,7 +19,7 @@ public class BookingController {
     }
 
     @PostMapping
-    public BookingDtoResponse createBooking(@Valid @RequestBody BookingDtoCreate bookingDtoCreate,
+    public BookingDtoResponse createBooking(@RequestBody BookingDtoCreate bookingDtoCreate,
                                             @RequestHeader("X-Sharer-User-Id") Long id) {
         return bookingService.addBooking(bookingDtoCreate, id);
     }
@@ -45,9 +42,9 @@ public class BookingController {
                                                          @RequestParam(value = "state",
                                                                  required = false,
                                                                  defaultValue = "ALL") String state,
-                                                         @PositiveOrZero @RequestParam(required = false,
+                                                         @RequestParam(required = false,
                                                                  defaultValue = "0") int from,
-                                                         @Positive @RequestParam(required = false,
+                                                         @RequestParam(required = false,
                                                                  defaultValue = "10") int size) {
         return bookingService.getBookingsByState(userId, state, from, size);
     }
@@ -57,9 +54,9 @@ public class BookingController {
                                                                   @RequestParam(value = "state",
                                                                           required = false,
                                                                           defaultValue = "ALL") String state,
-                                                                  @PositiveOrZero @RequestParam(required = false,
+                                                                  @RequestParam(required = false,
                                                                           defaultValue = "0") int from,
-                                                                  @Positive @RequestParam(required = false,
+                                                                  @RequestParam(required = false,
                                                                           defaultValue = "10") int size) {
         return bookingService.getBookingsByStateForOwner(userId, state, from, size);
     }
