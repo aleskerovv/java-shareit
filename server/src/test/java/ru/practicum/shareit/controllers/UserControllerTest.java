@@ -12,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import javax.persistence.EntityNotFoundException;

@@ -12,14 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import ru.practicum.shareit.exceptions.NoAccessException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import javax.persistence.EntityNotFoundException;
-
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.hasSize;
